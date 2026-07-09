@@ -323,7 +323,7 @@ describe('Add', () => {
       })
 
       context('and the directory is updated after its content is added', () => {
-        it('creates the directory and its content on the remote Cozy without errors', async () => {
+        it('creates the directory and its content on the remote Cozy without errors', async function() {
           // Create directory and its content
           const dir = await createDoc('local', 'dir', parent)
           const subdir = await createDoc('local', 'subdir', dir)
