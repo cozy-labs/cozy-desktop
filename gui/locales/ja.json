@@ -214,6 +214,8 @@
 
   "MarkdownViewer Why do I see this?": "なぜこれが表示されていますか?",
 
+  "OAuth Could not login": "ログインを完了できませんでした。もう一度お試しいただくか、アカウントに Twake Workplace が関連付けられていることを確認してください。",
+
   "Quotation Start": "“",
   "Quotation End": "”",
 
