@@ -14,6 +14,7 @@ const { FetchError } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
 const { otherSide } = require('../../../core/side')
 const { Sync, compareChanges } = require('../../../core/sync')
+const { DependencyGraph } = require('../../../core/sync/dependency_graph')
 const syncErrors = require('../../../core/sync/errors')
 const Builders = require('../../support/builders')
 const dbBuilders = require('../../support/builders/db')
@@ -1574,6 +1575,57 @@ describe('Sync', function() {
         it('returns 0', () => {
           should(compareChanges(move, del)).eql(0)
           should(compareChanges(del, move)).eql(0)
+        })
+      }
+    )
+
+    context(
+      'with a directory move and a replaced child deletion from the move source',
+      () => {
+        let moveDir, delFile, addFile
+        beforeEach(async function() {
+          const srcDir = await builders
+            .metadir()
+            .path('src')
+            .upToDate()
+            .create()
+          const dstDir = await builders
+            .metadir()
+            .moveFrom(srcDir)
+            .path('dst')
+            .changedSide('local')
+            .create()
+          const oldFile = await builders
+            .metafile()
+            .path('src/file')
+            .trashed()
+            .changedSide('local')
+            .create()
+          const newFile = await builders
+            .metafile()
+            .path('dst/file')
+            .sides({ local: 1 })
+            .create()
+
+          moveDir = makeChange(dstDir, 'MOVE', this)
+          delFile = makeChange(oldFile, 'DEL', this)
+          addFile = makeChange(newFile, 'ADD', this)
+        })
+
+        it('returns -1 if deletion is passed as first argument', () => {
+          should(compareChanges(delFile, moveDir)).eql(-1)
+        })
+
+        it('returns 1 if deletion is passed as second argument', () => {
+          should(compareChanges(moveDir, delFile)).eql(1)
+        })
+
+        it('orders the deletion before the parent move before the replacement addition', () => {
+          const graph = new DependencyGraph([addFile, moveDir, delFile], {
+            compare: compareChanges
+          })
+
+          should(graph.toArray()).deepEqual([delFile, moveDir, addFile])
         })
       }
     )

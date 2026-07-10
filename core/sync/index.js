@@ -170,22 +170,42 @@ const compareChanges = (
       else if (docA.path.startsWith(docB.path + sep)) return B_FIRST
     }
 
-    if (opA.type === 'DEL' && opB.type === 'MOVE' && docB.moveFrom != null) {
-      // Handle parent deletion after child move outside of parent
-      if (
-        docB.moveFrom.path.startsWith(docA.path + sep) &&
-        !docB.path.startsWith(docA.path + sep)
-      ) {
-        return B_FIRST
+    if (opA.type === 'DEL' && opB.type === 'MOVE') {
+      const moveFromB = docB.moveFrom
+      if (moveFromB != null) {
+        // Handle parent deletion after child move outside of parent
+        if (
+          moveFromB.path.startsWith(docA.path + sep) &&
+          !docB.path.startsWith(docA.path + sep)
+        ) {
+          return B_FIRST
+        }
+        // Handle child deletion before parent move
+        if (
+          metadata.isFolder(docB) &&
+          docA.path.startsWith(moveFromB.path + sep)
+        ) {
+          return A_FIRST
+        }
       }
     }
-    if (opB.type === 'DEL' && opA.type === 'MOVE' && docA.moveFrom != null) {
-      // Handle parent deletion after child move outside of parent
-      if (
-        docA.moveFrom.path.startsWith(docB.path + sep) &&
-        !docA.path.startsWith(docB.path + sep)
-      )
-        return A_FIRST
+    if (opB.type === 'DEL' && opA.type === 'MOVE') {
+      const moveFromA = docA.moveFrom
+      if (moveFromA != null) {
+        // Handle parent deletion after child move outside of parent
+        if (
+          moveFromA.path.startsWith(docB.path + sep) &&
+          !docA.path.startsWith(docB.path + sep)
+        )
+          return A_FIRST
+        // Handle child deletion before parent move
+        if (
+          metadata.isFolder(docA) &&
+          docB.path.startsWith(moveFromA.path + sep)
+        ) {
+          return B_FIRST
+        }
+      }
     }
 
     if (opA.type === 'ADD' && opB.type === 'MOVE' && docB.moveFrom != null) {
