@@ -182,16 +182,15 @@ describe('Differential synchronization', () => {
         // `Photos/My Image.png` too many times and ends up recreating its
         // missing parent (i.e. `Photos/`), thus triggering an uncaught
         // `ExcludedDir` error.
-        const localScanDone = async () => {
-          await new Promise(resolve => {
-            helpers.local.side.events.on('local-end', resolve)
+        const waitForLocalEnd = () =>
+          new Promise(resolve => {
+            helpers.local.side.events.once('local-end', resolve)
           })
-        }
         await helpers.local.side.start()
-        await localScanDone()
+        const localChangesDone = waitForLocalEnd()
         await helpers.local.syncDir.ensureDir('Photos')
         await helpers.local.syncDir.ensureFile('Photos/My Image.png')
-        await localScanDone()
+        await localChangesDone
         await helpers.syncAll()
 
         should(await helpers.local.treeWithoutTrash()).deepEqual([

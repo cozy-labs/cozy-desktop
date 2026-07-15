@@ -7,6 +7,7 @@ const _ = require('lodash')
 const should = require('should')
 
 const { TRASH_DIR_ID } = require('../../core/remote/constants')
+const { MAX_SYNC_RETRIES } = require('../../core/sync')
 const { logger } = require('../../core/utils/logger')
 const Builders = require('../support/builders')
 const dbBuilders = require('../support/builders/db')
@@ -1158,6 +1159,19 @@ describe('Move', () => {
       await helpers.local.syncDir.move('dir', 'renamed')
       await helpers.local.scan()
     }
+    const exhaustMissingDocumentRetries = async dirPath => {
+      const docs = [
+        await helpers.docByPath(dirPath),
+        ...(await pouch.byRecursivePath(dirPath))
+      ]
+
+      await pouch.bulkDocs(
+        docs.map(doc => ({
+          ...doc,
+          errors: MAX_SYNC_RETRIES - 1
+        }))
+      )
+    }
 
     context('overwritting existing remote directory', () => {
       let existing, overwritten
@@ -1218,10 +1232,11 @@ describe('Move', () => {
           await helpers.remote.ignorePreviousChanges()
         })
 
-        // We should be retrying a few times and then finally skip the change to
-        // avoid looping over it.
+        // Start from exhausted retries to validate the recovery without waiting
+        // for every auto-retry in this integration test.
         it('ends up replacing the overwritten file', async () => {
           await moveDir()
+          await exhaustMissingDocumentRetries('renamed')
           await helpers.syncAll()
 
           should(await helpers.trees()).deepEqual({
@@ -1260,10 +1275,11 @@ describe('Move', () => {
         await helpers.remote.ignorePreviousChanges()
       })
 
-      // We should be retrying a few times and then finally skip the change to
-      // avoid looping over it.
+      // Start from exhausted retries to validate the recovery without waiting
+      // for every auto-retry in this integration test.
       it('ends up re-uploading the file at the destination', async () => {
         await moveDir()
+        await exhaustMissingDocumentRetries('renamed')
         await helpers.syncAll()
 
         should(await helpers.trees()).deepEqual({

@@ -464,13 +464,15 @@ class Sync {
 
     return new Promise((resolve, reject) => {
       let feedObserver
+      let onWillStop
       const done = (result, err) => {
         if (feedObserver) feedObserver.cancel()
-        this.lifecycle.off('will-stop', done)
+        if (onWillStop) this.lifecycle.off('will-stop', onWillStop)
         if (err) reject(err)
         else resolve(result)
       }
-      this.lifecycle.once('will-stop', () => done(false))
+      onWillStop = () => done(false)
+      this.lifecycle.once('will-stop', onWillStop)
 
       feedObserver = this.pouch.db
         .changes(opts)

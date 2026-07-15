@@ -76,6 +76,19 @@ describe('Sync', function() {
     builders = new Builders(this)
   })
 
+  describe('hasChangesToSync', () => {
+    it('removes its stop listener once it resolves', async function() {
+      await builders
+        .metafile()
+        .path('file')
+        .sides({ local: 1 })
+        .create()
+
+      should(await this.sync.hasChangesToSync()).be.true()
+      should(this.sync.lifecycle.listenerCount('will-stop')).eql(0)
+    })
+  })
+
   describe('start', function() {
     beforeEach('instanciate sync', function() {
       const events = new EventEmitter()
