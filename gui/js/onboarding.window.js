@@ -325,6 +325,8 @@ module.exports = class OnboardingWM extends WindowManager {
     const code = deeplink.searchParams.get('code')
     const fqdn = deeplink.searchParams.get('fqdn')
 
+    this.focus()
+
     if (!code || !fqdn) {
       log.error('invalid OAuth callback', { url })
       this.win.webContents.send(
