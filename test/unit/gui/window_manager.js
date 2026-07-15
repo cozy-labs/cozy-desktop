@@ -24,6 +24,10 @@ describe('window_manager', () => {
       windowManager.win = null
 
       windowManager.focus()
+
+      sinon.assert.notCalled(win.isMinimized)
+      sinon.assert.notCalled(win.restore)
+      sinon.assert.notCalled(win.focus)
     })
 
     it('focuses an existing window', () => {
