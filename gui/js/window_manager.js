@@ -117,7 +117,11 @@ module.exports = class WindowManager {
   }
 
   focus() {
-    return this.win && this.win.focus()
+    if (!this.win) return
+
+    if (this.win.isMinimized()) this.win.restore()
+
+    return this.win.focus()
   }
 
   reload() {
