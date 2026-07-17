@@ -619,4 +619,26 @@ describe('core/migrations', function() {
       })
     })
   })
+
+  describe('[migration] Convert legacy skipped:true to UserSkipped', () => {
+    const migration = migrations.find(m => m.targetSchemaVersion === 15)
+    if (!migration) throw new Error('migration 15 not found')
+
+    describe('affectedDocs()', () => {
+      it('returns only docs with skipped === true', () => {
+        const docs /*: any */ = [{ skipped: true, path: 'a' }, { path: 'b' }]
+        const affected = migration.affectedDocs(docs)
+        should(affected).have.length(1)
+        should(affected[0].path).equal('a')
+      })
+    })
+
+    describe('run()', () => {
+      it('sets skipped to UserSkipped', async function() {
+        const docs /*: any */ = [{ skipped: true, path: 'a' }]
+        const migrated = await migration.run(docs, this)
+        should(migrated[0].skipped).equal('UserSkipped')
+      })
+    })
+  })
 })

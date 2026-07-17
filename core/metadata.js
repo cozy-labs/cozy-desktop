@@ -166,7 +166,7 @@ export type Metadata = {
 
   trashed?: true,
   errors?: number,
-  skipped?: boolean,
+  skipped?: string,
   overwrite?: SavedMetadata,
   childMove?: boolean,
   incompatibilities?: *,

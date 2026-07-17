@@ -75,6 +75,19 @@ const wasSkipped = (change /*: PouchDBFeedData */) => {
   return change.doc.skipped
 }
 
+// Skip codes whose dependants should be cascaded (fatal skips).
+// Non-fatal skips (e.g. CONFLICTING_NAME, INVALID_METADATA,
+// MISSING_DOCUMENT when marked for deletion) are auto-resolved by a
+// future merge/re-scan: cascading them would leave dependants stuck.
+const FATAL_SKIP_CODES = new Set([
+  remoteErrors.MISSING_PARENT_CODE,
+  syncErrors.SKIPPED_DEPENDENCY_CODE,
+  syncErrors.USER_SKIPPED_CODE
+])
+
+const isFatalSkip = (skipped /*: ?string */) =>
+  typeof skipped === 'string' && FATAL_SKIP_CODES.has(skipped)
+
 // Returns the given side metadata of the given PouchDB record.
 // It is meant to get the outdated side metadata of the record to compare it
 // against the new metadata and decide which actions to take.
@@ -570,12 +583,29 @@ class Sync {
           if (blockedIds.size === 0) {
             await this.pouch.setLocalSeq(change.seq)
           }
+          blockedIds.add(change.id)
           this.resolveBlockingCause(change.id)
           continue
         }
 
-        if (graph.directPrerequisites(change).some(d => blockedIds.has(d.id))) {
+        const prereqs = graph.directPrerequisites(change)
+        if (prereqs.some(c => blockedIds.has(c.id))) {
           blockedIds.add(change.id)
+
+          const skippedPrereq = prereqs.find(c => isFatalSkip(c.doc.skipped))
+          if (skippedPrereq) {
+            const err = syncErrors.skippedDependencyErr(
+              change,
+              skippedPrereq.doc.path
+            )
+            await this.skipChange(change, err)
+            this.events.emit(
+              'user-alert',
+              err,
+              change.seq,
+              change.operation.side != null && change.operation.side
+            )
+          }
           continue
         }
 
@@ -591,7 +621,8 @@ class Sync {
 
           const result = await this.handleSyncError(err, change)
           if (result === 'fatal') return
-          if (result === 'blocked') blockedIds.add(change.id)
+          if (result === 'blocked' || result === 'skipped')
+            blockedIds.add(change.id)
           if (
             (result === 'skipped' || result === 'recovered') &&
             blockedIds.size === 0
@@ -616,8 +647,8 @@ class Sync {
     err /*: SyncError */,
     change /*: Change */
   ) /*: Promise<'blocked' | 'skipped' | 'recovered' | 'fatal'> */ {
+    const sideName = err.sideName || 'local'
     const {
-      sideName,
       doc: { path }
     } = err
 
@@ -1359,7 +1390,7 @@ class Sync {
       doc.errors = (doc.errors || 0) + 1
 
       // Make sure isUpToDate(sourceSideName, doc) is still true
-      const sourceSideName = otherSide(err.sideName)
+      const sourceSideName = err.sideName ? otherSide(err.sideName) : 'local'
       metadata.markSide(sourceSideName, doc, doc)
 
       change.doc = await this.pouch.put(doc, { checkInvariants: false })
@@ -1399,7 +1430,7 @@ class Sync {
 
     this._blockedCauses.delete(change.id)
 
-    doc.skipped = true
+    doc.skipped = err.code
     await this.pouch.put(doc, { checkInvariants: false })
   }
 

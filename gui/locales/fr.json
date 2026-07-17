@@ -123,6 +123,8 @@
   "Error Twake Desktop encountered an unexpected error while trying to synchronise the {0}.": "Twake Desktop a rencontré une erreur inattendue en essayant de synchroniser le {0}.",
   "Error Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically.": "L'hébergeur de votre Twake Workplace doit être en train de corriger le problème et une nouvelle tentative de synchronisation sera effectuée automatiquement et périodiquement.",
   "Error Maintenance in progress": "Maintenance en cours",
+  "Error Skipped dependency": "Dépendance ignorée.",
+  "Error Change skipped: a prerequisite change on `{0}` was skipped.": "Changement ignoré : un changement préalable sur `{0}` a été ignoré.",
   "Error The synchronization of your documents is momentarily paused.": "La synchronisation de vos documents est momentanément interrompue.",
   "Error It will resume once the maintenance is over.": "Elle reprendra automatiquement à la fin de cette maintenance.",
   "Error Document path incompatible with current OS": "Chemin incompatible avec l'OS courant",

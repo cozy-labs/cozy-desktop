@@ -414,12 +414,159 @@ describe('Multiple sync errors', function() {
     })
   })
 
+  describe('transitive skip of dependants', () => {
+    it('skips a dependant when its prerequisite was skipped and emits SKIPPED_DEPENDENCY alert', async function() {
+      // A (skipped) → B (depends on A, path under A)
+      const docA = await builders
+        .metafile()
+        .path('skiproot')
+        .sides({ local: 1 })
+        .create()
+      const docB = await builders
+        .metafile()
+        .path('skiproot/child')
+        .sides({ local: 1 })
+        .create()
+
+      const changeA = {
+        changes: [{ rev: docA._rev }],
+        doc: docA,
+        id: docA._id,
+        seq: 40,
+        operation: { type: 'ADD', side: 'local' }
+      }
+      const changeB = {
+        changes: [{ rev: docB._rev }],
+        doc: docB,
+        id: docB._id,
+        seq: 41,
+        operation: { type: 'ADD', side: 'local' }
+      }
+
+      // A is already marked skipped (e.g. user skipped it earlier).
+      docA.skipped = syncErrors.USER_SKIPPED_CODE
+      await this.pouch.put(docA)
+
+      sinon
+        .stub(this.sync, 'getNextChanges')
+        .onFirstCall()
+        .resolves([changeA, changeB])
+        .onSecondCall()
+        .resolves([])
+
+      const applyStub = sinon.stub(this.sync, 'apply')
+      applyStub.callsFake(async change => {
+        if (change.id === docB._id) {
+          throw new Error('B should not be applied, only skipped')
+        }
+      })
+
+      sinon.stub(this.sync, 'scheduleRetry').resolves()
+      const emitSpy = sinon.spy(this.events, 'emit')
+
+      await this.sync.syncBatch()
+
+      // B was skipped transitively (not applied).
+      should(applyStub).not.have.been.called()
+
+      // B's doc is now marked skipped.
+      const skippedB = await this.pouch.bySyncedPath(docB.path)
+      should(skippedB.skipped).equal(syncErrors.SKIPPED_DEPENDENCY_CODE)
+
+      // A SKIPPED_DEPENDENCY alert was emitted for B with A's path in backticks.
+      const alertCalls = emitSpy.args.filter(args => args[0] === 'user-alert')
+      should(alertCalls).have.length(1)
+      const alertErr = alertCalls[0][1]
+      should(alertErr.code).equal(syncErrors.SKIPPED_DEPENDENCY_CODE)
+      should(alertErr.prereqPath).equal('skiproot')
+
+      this.sync.getNextChanges.restore()
+      this.sync.apply.restore()
+      this.sync.scheduleRetry.restore()
+      emitSpy.restore()
+    })
+
+    it('skips deep transitive chain [A(skip) → B(dep A) → C(dep B)]', async function() {
+      const docA = await builders
+        .metafile()
+        .path('deep')
+        .sides({ local: 1 })
+        .create()
+      const docB = await builders
+        .metafile()
+        .path('deep/mid')
+        .sides({ local: 1 })
+        .create()
+      const docC = await builders
+        .metafile()
+        .path('deep/mid/leaf')
+        .sides({ local: 1 })
+        .create()
+
+      const changeA = {
+        changes: [{ rev: docA._rev }],
+        doc: docA,
+        id: docA._id,
+        seq: 50,
+        operation: { type: 'ADD', side: 'local' }
+      }
+      const changeB = {
+        changes: [{ rev: docB._rev }],
+        doc: docB,
+        id: docB._id,
+        seq: 51,
+        operation: { type: 'ADD', side: 'local' }
+      }
+      const changeC = {
+        changes: [{ rev: docC._rev }],
+        doc: docC,
+        id: docC._id,
+        seq: 52,
+        operation: { type: 'ADD', side: 'local' }
+      }
+
+      docA.skipped = syncErrors.USER_SKIPPED_CODE
+      await this.pouch.put(docA)
+
+      sinon
+        .stub(this.sync, 'getNextChanges')
+        .onFirstCall()
+        .resolves([changeA, changeB, changeC])
+        .onSecondCall()
+        .resolves([])
+
+      const applyStub = sinon.stub(this.sync, 'apply').resolves(true)
+      sinon.stub(this.sync, 'scheduleRetry').resolves()
+      const emitSpy = sinon.spy(this.events, 'emit')
+
+      await this.sync.syncBatch()
+
+      // B and C were not applied (skipped transitively).
+      should(applyStub).not.have.been.called()
+
+      // Both B and C are marked skipped.
+      const skippedB = await this.pouch.bySyncedPath(docB.path)
+      const skippedC = await this.pouch.bySyncedPath(docC.path)
+      should(skippedB.skipped).equal(syncErrors.SKIPPED_DEPENDENCY_CODE)
+      should(skippedC.skipped).equal(syncErrors.SKIPPED_DEPENDENCY_CODE)
+
+      // Two SKIPPED_DEPENDENCY alerts (B and C).
+      const alertCalls = emitSpy.args.filter(args => args[0] === 'user-alert')
+      should(alertCalls).have.length(2)
+
+      this.sync.getNextChanges.restore()
+      this.sync.apply.restore()
+      this.sync.scheduleRetry.restore()
+      emitSpy.restore()
+    })
+  })
+
   describe('retry exhaustion', () => {
     it('calls setLocalSeq when a change was skipped', async function() {
       const doc = await builders
         .metafile()
         .path('exhausted')
-        .skipped(true)
+        .skipped(syncErrors.SKIPPED_DEPENDENCY_CODE)
         .sides({ local: 1 })
         .create()
 

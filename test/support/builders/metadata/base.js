@@ -276,8 +276,8 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  skipped(bool /*: boolean */) /*: this */ {
-    this.doc.skipped = bool
+  skipped(code /*: string */) /*: this */ {
+    this.doc.skipped = code
     return this
   }
 

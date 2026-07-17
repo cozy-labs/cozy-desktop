@@ -20,6 +20,7 @@ import I18n exposing (Helpers)
 import Icons
 import Time
 import Util.Conditional exposing (ShowInWeb, inWeb, onOS)
+import Util.DecorationParser exposing (DecorationResult(..), findDecorations)
 
 
 type alias UserAlertCode =
@@ -44,7 +45,7 @@ type Side
 
 
 type alias SynchronizationErrorInfo =
-    { status : UserActionStatus, seq : Int, id : String, docType : String, path : String, side : Maybe Side, lastSeenAt : Time.Posix }
+    { status : UserActionStatus, seq : Int, id : String, docType : String, path : String, side : Maybe Side, prereqPath : Maybe String, lastSeenAt : Time.Posix }
 
 
 type alias RemoteWarningInfo =
@@ -119,6 +120,7 @@ type alias EncodedUserAlert =
         Maybe
             { self : String
             }
+    , prereqPath : Maybe String
     , lastSeenAt : Maybe Int
     }
 
@@ -128,7 +130,7 @@ type alias EncodedCommand =
 
 
 decode : EncodedUserAlert -> Maybe UserAlert
-decode { seq, status, code, side, doc, links, lastSeenAt } =
+decode { seq, status, code, side, doc, links, prereqPath, lastSeenAt } =
     let
         decodedStatus =
             decodeUserActionStatus status
@@ -149,6 +151,7 @@ decode { seq, status, code, side, doc, links, lastSeenAt } =
                     , docType = docType
                     , path = path
                     , side = decodedSide side
+                    , prereqPath = prereqPath
                     , lastSeenAt = decodedLastSeenAt
                     }
                 )
@@ -167,6 +170,7 @@ encode alert =
             , side = encodedSide a.side
             , doc = Just { id = a.id, docType = a.docType, path = a.path }
             , links = Nothing
+            , prereqPath = a.prereqPath
             , lastSeenAt = Just (Time.posixToMillis a.lastSeenAt)
             }
 
@@ -177,6 +181,7 @@ encode alert =
             , side = Nothing
             , doc = Nothing
             , links = Nothing
+            , prereqPath = Nothing
             , lastSeenAt = Nothing
             }
 
@@ -187,6 +192,7 @@ encode alert =
             , side = Nothing
             , links = Just { self = a.link }
             , doc = Nothing
+            , prereqPath = Nothing
             , lastSeenAt = Nothing
             }
 
@@ -350,7 +356,7 @@ viewSyncError helpers platform now alert info =
                 [ text (Path.toString dirPath) ]
             ]
         , span [ class "file-line-content u-spacenormal u-errorColorDark u-mt-half" ]
-            (alertContent helpers content)
+            (alertContent helpers platform content)
         , div [ class "u-flex u-mt-half u-pb-1" ] buttons
         ]
 
@@ -373,7 +379,7 @@ viewRemoteError helpers platform now alert =
             [ span [ class "file-parent-folder" ] [ text (helpers.t "UserAlert System") ]
             ]
         , span [ class "file-line-content u-spacenormal u-errorColorDark u-mt-half" ]
-            (alertContent helpers content)
+            (alertContent helpers platform content)
         , div [ class "u-flex u-mt-half u-pb-1" ] buttons
         ]
 
@@ -588,6 +594,15 @@ viewByCode helpers alert =
                 [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
             }
 
+        SynchronizationError "SkippedDependency" { prereqPath } ->
+            { title = "Error Skipped dependency"
+            , content =
+                [ Maybe.withDefault "" prereqPath
+                    |> (\p -> helpers.interpolate [ p ] "Error Change skipped: a prerequisite change on `{0}` was skipped.")
+                ]
+            , buttons = []
+            }
+
         SynchronizationError "UnknownRemoteError" { docType } ->
             let
                 localDocType =
@@ -617,12 +632,41 @@ localDocTypeLabel docType =
         "Helpers file"
 
 
-alertContent : Helpers -> List String -> List (Html Msg)
-alertContent helpers details =
+alertContent : Helpers -> Platform -> List String -> List (Html Msg)
+alertContent helpers platform details =
     details
         |> List.map helpers.capitalize
-        |> List.map text
+        |> List.map (viewActionContentLine platform)
         |> List.intersperse (br [] [])
+
+
+viewActionContentLine : Platform -> String -> Html Msg
+viewActionContentLine platform line =
+    let
+        toHTML =
+            \decoration ->
+                case decoration of
+                    Decorated path ->
+                        Path.fromString platform path
+                            |> decoratedName
+
+                    Normal str ->
+                        text str
+    in
+    span []
+        (findDecorations line
+            |> List.map toHTML
+        )
+
+
+decoratedName : Path -> Html Msg
+decoratedName path =
+    span
+        [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
+        , title (Path.toString path)
+        , onClick (ShowInParent path onOS)
+        ]
+        [ text (Path.name path) ]
 
 
 classList : List String -> List ( Maybe Bool, String ) -> String
