@@ -71,6 +71,10 @@ const config = {
     ]
   },
 
+  nsis: {
+    include: 'build/installer.nsh'
+  },
+
   win: {
     target: [{ target: 'nsis', arch: ['x64'] }],
     artifactName: 'Twake-Desktop-Setup.${ext}',
