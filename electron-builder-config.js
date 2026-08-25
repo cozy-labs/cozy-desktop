@@ -101,7 +101,6 @@ const config = {
 
   extraResources: [
     { from: 'build/launcher-script.sh', to: 'launcher-script.sh' },
-    { from: 'node_modules/regedit/vbs', to: 'regedit/vbs', filter: ['**/*'] },
     {
       from: 'build/vnd.cozy.note+markdown.xml',
       to: 'vnd.cozy.note+markdown.xml'
