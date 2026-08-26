@@ -39,5 +39,31 @@ runs:
           # - the others for cross-compiling 32 bit apps on a 64 bit machine
           sudo apt update
           sudo apt install --no-install-recommends -y libopenjp2-tools gcc-multilib g++-multilib
+        elif [ "${{ runner.os }}" == "macOS" ] && [ -n "$CSC_LINK" ]; then
+          # Workaround for https://github.com/cozy-labs/cozy-desktop/issues/2463
+          # electron-builder passes the .p12 password instead of the keychain
+          # password to `security set-key-partition-list -k`
+          # (https://github.com/electron-userland/electron-builder/issues/10066).
+          # We create the keychain ourselves and let electron-builder discover
+          # the identity via `security find-identity`, which never hits the
+          # buggy code path. Revert once electron-builder merges the fix
+          # (#10067 / #10101) and we upgrade.
+          set -euo pipefail
+
+          CERT_PATH="$RUNNER_TEMP/certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+
+          echo "$CSC_LINK" | base64 --decode > "$CERT_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$CSC_KEY_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
+          # Bypass electron-builder's own (buggy) keychain creation.
+          unset CSC_LINK CSC_KEY_PASSWORD
         fi
         yarn dist
