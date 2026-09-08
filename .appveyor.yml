@@ -40,6 +40,9 @@ build_script:
             ($env:FORCE_CODE_SIGNING -eq "true") -or (($env:APPVEYOR_REPO_BRANCH -eq "master" ) -and ($env:APPVEYOR_REPO_TAG -eq 'true'))
           )
           yarn dist
+          # Propagate yarn's exit code: AppVeyor only fails a pwsh step on an
+          # uncaught exception, not on a non-zero native command exit code.
+          exit $LASTEXITCODE
       }
 
 artifacts:
