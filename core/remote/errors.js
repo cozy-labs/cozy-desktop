@@ -4,6 +4,7 @@
  */
 
 const { FILE_TYPE, MAX_FILE_SIZE } = require('./constants')
+const { LocalFsError } = require('../local/errors')
 
 /*::
 import type { SavedMetadata } from '../metadata'
@@ -189,7 +190,12 @@ const wrapError = (
   err /*: FetchError |  Error */,
   doc /*: ?SavedMetadata */
 ) /*: RemoteError */ => {
-  if (isNetworkError(err)) {
+  // A RemoteError is already classified: re-wrapping it could discard its
+  // code, since its message embeds the original one which can match
+  // isNetworkError.
+  if (err instanceof RemoteError) {
+    return err
+  } else if (isNetworkError(err)) {
     // $FlowFixMe FetchErrors missing status will fallback to the default case
     const { status } = err
 
@@ -339,8 +345,6 @@ const wrapError = (
         'The parent directory of the document is missing on the Twake Workplace',
       err
     })
-  } else if (err instanceof RemoteError) {
-    return err
   } else {
     return new RemoteError({ err })
   }
@@ -383,16 +387,55 @@ function detail(err /*: FetchError */) /*: ?string */ {
 function isNetworkError(err /*: Error */) {
   return (
     err.name === 'FetchError' ||
+    hasNetworkInterruption(err) ||
     (typeof err.message === 'string' && err.message.includes('net::'))
+  )
+}
+
+// Errors raised mid-transfer when the network breaks or changes, by
+// Electron's net stack (HTTP/2 protocol errors, mojo errors) or by Node
+// sockets. Contrary to `net::*` errors, they can emerge from layers other
+// than the request itself and lose their `FetchError` identity.
+const NETWORK_INTERRUPTION_CODES = [
+  'ERR_HTTP2_PROTOCOL_ERROR',
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'EPIPE',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'EAI_AGAIN'
+]
+const NETWORK_INTERRUPTION_MESSAGES = [
+  ...NETWORK_INTERRUPTION_CODES,
+  'mojo result'
+]
+// Match signatures as whole words only: a message merely containing a code
+// as a substring (e.g. `EPIPEFILE`) is not a network interruption.
+const NETWORK_INTERRUPTION_RE = new RegExp(
+  `\\b(${NETWORK_INTERRUPTION_MESSAGES.join('|')})\\b`
+)
+
+function hasNetworkInterruption(err /*: Error */) {
+  // Local FS errors can carry socket-like codes (e.g. ECONNRESET from a
+  // failing disk), but they are not network errors.
+  if (err instanceof LocalFsError) return false
+
+  const { code } = (err /*: { code?: string } */)
+  const message = typeof err.message === 'string' ? err.message : ''
+
+  return (
+    (code != null && NETWORK_INTERRUPTION_CODES.includes(code)) ||
+    NETWORK_INTERRUPTION_RE.test(message)
   )
 }
 
 function isRetryableNetworkError(err /*: Error */) {
   return (
-    typeof err.message === 'string' &&
-    err.message.includes('net::') &&
-    !err.message.includes('net::ERR_INTERNET_DISCONNECTED') &&
-    !err.message.includes('net::ERR_PROXY_CONNECTION_FAILED')
+    (typeof err.message === 'string' &&
+      err.message.includes('net::') &&
+      !err.message.includes('net::ERR_INTERNET_DISCONNECTED') &&
+      !err.message.includes('net::ERR_PROXY_CONNECTION_FAILED')) ||
+    hasNetworkInterruption(err)
   )
 }
 
