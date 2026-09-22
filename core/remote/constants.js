@@ -40,6 +40,7 @@ module.exports = {
 
   REMOTE_WATCHER_ERROR_EVENT: 'RemoteWatcher:error',
   REMOTE_WATCHER_FATAL_EVENT: 'RemoteWatcher:fatal',
+  REMOTE_WATCHER_SUCCESS_EVENT: 'RemoteWatcher:success',
 
   // ToS updated warning code
   TOS_UPDATED_WARNING_CODE: 'tos-updated',

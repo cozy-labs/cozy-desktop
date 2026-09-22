@@ -333,6 +333,9 @@ class Sync {
     this.remote.watcher.onError(err => {
       this.blockSyncFor({ err })
     })
+    this.remote.watcher.onSuccess(() => {
+      this.resolveRemoteCauses()
+    })
     this.remote.watcher.onFatal(err => {
       this.fatal(err)
     })
@@ -1328,6 +1331,15 @@ class Sync {
       cause.err,
       cause.change && cause.change.seq
     )
+  }
+
+  // Blocking causes without change (watcher errors) are keyed `remote:<code>`
+  // and stay registered until a watch run finally succeeds, so their user
+  // alerts are not removed before the error is actually resolved.
+  resolveRemoteCauses() {
+    for (const key of this._blockedCauses.keys()) {
+      if (key.startsWith('remote:')) this.resolveBlockingCause(key)
+    }
   }
 
   async _onUserActionCommand(

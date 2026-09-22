@@ -18,7 +18,8 @@ const {
   HEARTBEAT: REMOTE_HEARTBEAT,
   INITIAL_SEQ,
   REMOTE_WATCHER_ERROR_EVENT,
-  REMOTE_WATCHER_FATAL_EVENT
+  REMOTE_WATCHER_FATAL_EVENT,
+  REMOTE_WATCHER_SUCCESS_EVENT
 } = require('../../../core/remote/constants')
 const { FetchError, RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
@@ -332,6 +333,36 @@ describe('RemoteWatcher', function() {
       should(this.watcher.watch).have.been.calledTwice()
     })
 
+    it('emits a REMOTE_WATCHER_SUCCESS_EVENT event', async function() {
+      await this.watcher.requestRun()
+      should(this.events.emit).have.been.calledWith(
+        REMOTE_WATCHER_SUCCESS_EVENT
+      )
+    })
+
+    it('emits one REMOTE_WATCHER_SUCCESS_EVENT per run', async function() {
+      this.events.emit.resetHistory()
+
+      // Adding a bunch of concurrent run requests
+      const runs = [this.watcher.requestRun()]
+      await new Promise(resolve => process.nextTick(resolve))
+      runs.push(
+        this.watcher.requestRun(),
+        this.watcher.requestRun(),
+        this.watcher.requestRun(),
+        this.watcher.requestRun()
+      )
+      await Promise.all(runs)
+
+      // Two runs happened, so the event was emitted twice, not once per
+      // waiting request.
+      should(
+        this.events.emit
+          .getCalls()
+          .filter(call => call.calledWith(REMOTE_WATCHER_SUCCESS_EVENT))
+      ).have.length(2)
+    })
+
     context('when the watcher is stopped', () => {
       beforeEach(function() {
         this.watcher.running = false
@@ -340,6 +371,22 @@ describe('RemoteWatcher', function() {
       it('does not call watch()', async function() {
         await this.watcher.requestRun()
         should(this.watcher.watch).not.have.been.called()
+      })
+    })
+
+    context('when watch() skipped the run because the watcher stopped', () => {
+      beforeEach(function() {
+        // Simulate a run whose task was dequeued while stop() was setting
+        // running = false: watch() returns false without reaching the server.
+        this.watcher.watch.resolves(false)
+        this.events.emit.resetHistory()
+      })
+
+      it('does not emit a REMOTE_WATCHER_SUCCESS_EVENT event', async function() {
+        await this.watcher.requestRun()
+        should(this.events.emit).not.have.been.calledWith(
+          REMOTE_WATCHER_SUCCESS_EVENT
+        )
       })
     })
 
@@ -355,6 +402,8 @@ describe('RemoteWatcher', function() {
             err: new FetchError({ status: 400 }, randomMessage())
           })
           this.watcher.watch.rejects(err)
+          // Drop the events emitted by the successful start() run
+          this.events.emit.resetHistory()
         })
 
         it('stops the watcher', async function() {
@@ -369,6 +418,13 @@ describe('RemoteWatcher', function() {
             err
           )
         })
+
+        it('does not emit a REMOTE_WATCHER_SUCCESS_EVENT event', async function() {
+          await this.watcher.requestRun()
+          should(this.events.emit).not.have.been.calledWith(
+            REMOTE_WATCHER_SUCCESS_EVENT
+          )
+        })
       })
 
       context('when next #watch() could work', () => {
@@ -379,6 +435,8 @@ describe('RemoteWatcher', function() {
             err: new FetchError({ status: 500 }, randomMessage())
           })
           this.watcher.watch.rejects(err)
+          // Drop the events emitted by the successful start() run
+          this.events.emit.resetHistory()
         })
 
         it('does not stop the watcher', async function() {
@@ -393,6 +451,47 @@ describe('RemoteWatcher', function() {
             err
           )
         })
+
+        it('does not emit a REMOTE_WATCHER_SUCCESS_EVENT event', async function() {
+          await this.watcher.requestRun()
+          should(this.events.emit).not.have.been.calledWith(
+            REMOTE_WATCHER_SUCCESS_EVENT
+          )
+        })
+      })
+    })
+
+    context('when several requests share failing runs', () => {
+      beforeEach(function() {
+        sinon.spy(this.watcher, 'error')
+        this.watcher.watch.rejects(
+          new remoteErrors.RemoteError({
+            code: remoteErrors.UNREACHABLE_COZY_CODE,
+            message: 'Cannot reach remote Cozy',
+            err: new FetchError({ status: 500 }, faker.random.words())
+          })
+        )
+      })
+
+      afterEach(function() {
+        this.watcher.error.restore()
+      })
+
+      it('emits the error once per run', async function() {
+        // Adding a bunch of concurrent run requests
+        const runs = [this.watcher.requestRun()]
+        await new Promise(resolve => process.nextTick(resolve))
+        runs.push(
+          this.watcher.requestRun(),
+          this.watcher.requestRun(),
+          this.watcher.requestRun(),
+          this.watcher.requestRun()
+        )
+        await Promise.all(runs)
+
+        // Two runs happened and each emitted the error once, instead of
+        // once per waiting request.
+        should(this.watcher.error).have.been.calledTwice()
       })
     })
   })

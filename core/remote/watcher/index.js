@@ -16,7 +16,8 @@ const {
   DIR_TYPE,
   HEARTBEAT,
   REMOTE_WATCHER_ERROR_EVENT,
-  REMOTE_WATCHER_FATAL_EVENT
+  REMOTE_WATCHER_FATAL_EVENT,
+  REMOTE_WATCHER_SUCCESS_EVENT
 } = require('../constants')
 const { inRemoteTrash } = require('../document')
 const remoteErrors = require('../errors')
@@ -162,6 +163,15 @@ class RemoteWatcher {
     this.events.emit(REMOTE_WATCHER_ERROR_EVENT, err)
   }
 
+  onSuccess(listener /*: () => any */) {
+    this.events.on(REMOTE_WATCHER_SUCCESS_EVENT, listener)
+  }
+
+  success() {
+    log.debug('Remote watcher run succeeded')
+    this.events.emit(REMOTE_WATCHER_SUCCESS_EVENT)
+  }
+
   onFatal(listener /*: Error => any */) {
     this.events.on(REMOTE_WATCHER_FATAL_EVENT, listener)
   }
@@ -174,8 +184,23 @@ class RemoteWatcher {
   }
 
   startQueue() {
+    // The worker is the sole emitter of success/error/fatal events so they
+    // are emitted once per run, not once per requestRun() waiter.
     this.queue = async.queue(async () => {
-      await this.watch()
+      try {
+        const ran = await this.watch()
+        if (ran !== false) this.success()
+      } catch (err) {
+        switch (err.code) {
+          case remoteErrors.OAUTH_CLIENT_REVOKED_CODE:
+          case remoteErrors.MISSING_PERMISSIONS_CODE:
+          case remoteErrors.TWAKE_NOT_FOUND_CODE:
+            await this.fatal(err)
+            break
+          default:
+            this.error(err)
+        }
+      }
     })
   }
 
@@ -208,42 +233,33 @@ class RemoteWatcher {
       return
     }
 
-    try {
-      log.debug('requesting watch run')
+    log.debug('requesting watch run')
 
-      if (this.queue.idle()) {
-        // If there aren't any requests running, enqueue one and wait until
-        // it's completed.
-        await this.queue.pushAsync()
-      } else if (this.queue.length() === 0) {
-        // If there is a request running but none enqueued, enqueue one, mark
-        // it as the next request to run and wait until it's completed.
-        this.nextRun = this.queue.pushAsync()
-        await this.nextRun
-      } else {
-        // If the queue is full (i.e. one running request + one enqueued
-        // request), wait until the next request has completed.
-        await this.nextRun
-      }
-    } catch (err) {
-      switch (err.code) {
-        case remoteErrors.OAUTH_CLIENT_REVOKED_CODE:
-        case remoteErrors.MISSING_PERMISSIONS_CODE:
-        case remoteErrors.TWAKE_NOT_FOUND_CODE:
-          await this.fatal(err)
-          break
-        default:
-          this.error(err)
-      }
+    if (this.queue.idle()) {
+      // If there aren't any requests running, enqueue one and wait until
+      // it's completed.
+      await this.queue.pushAsync()
+    } else if (this.queue.length() === 0) {
+      // If there is a request running but none enqueued, enqueue one, mark
+      // it as the next request to run and wait until it's completed.
+      this.nextRun = this.queue.pushAsync()
+      await this.nextRun
+    } else {
+      // If the queue is full (i.e. one running request + one enqueued
+      // request), wait until the next request has completed.
+      await this.nextRun
     }
   }
 
-  async watch() /*: Promise<?RemoteError> */ {
+  async watch() /*: Promise<void|false> */ {
     const release = await this.pouch.lock(this)
     try {
       if (!this.running) {
         log.info('Watcher stopped: skipping remote watch')
-        return
+
+        // Returning false marks the run as skipped so the queue worker does
+        // not report it as a success.
+        return false
       }
 
       this.events.emit('buffering-start')

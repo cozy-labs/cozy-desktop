@@ -210,11 +210,10 @@ const retryAll = async (
   for (const cause of causes) {
     if (cause.change) {
       await sync.updateErrors(cause.change, cause.err)
-    } else {
-      sync._blockedCauses.delete(
-        sync._blockedCauseKey({ docId: undefined, code: cause.err.code })
-      )
     }
+    // Causes without change stay registered in _blockedCauses (and their
+    // user alert displayed) until the restarted watcher completes a
+    // successful run: see Sync.resolveRemoteCauses.
   }
 
   // Fire-and-forget: awaiting watcher.start() would deadlock with the
