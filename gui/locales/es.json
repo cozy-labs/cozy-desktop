@@ -57,6 +57,18 @@
   "CGUUpdated Their acceptance is required to continue using your Twake Workplace.": "Se requiere aceptarlas para seguir utilizando Twake Workplace.",
   "CGUUpdated Read the new ToS": "Leer las nuevas condiciones de servicio (ToS)",
 
+  "Error Rename it on Twake Drive so it gets synced": "Renómbrelo en Twake Drive para que se sincronice",
+  "Error The full path « {0} » is too long ({1} characters; limit: {2} characters)": "La ruta completa « {0} » es demasiado larga ({1} caracteres; límite: {2} caracteres)",
+  "Error The name of the {0} « {1} » contains forbidden characters: « {2} »": "El nombre del archivo/carpeta « {1} » contiene caracteres prohibidos: « {2} »",
+  "Error The {0}'s name contains forbidden characters: « {1} »": "El nombre del {0} contiene caracteres prohibidos: « {1} »",
+  "Error The name of the {0} « {1} » ends with a forbidden character: « {2} »": "El nombre de « {1} » termina con un carácter prohibido: « {2} »",
+  "Error The {0}'s name ends with a forbidden character: « {1} »": "El nombre del {0} termina con un carácter prohibido: « {1} »",
+  "Error The name of the {0} « {1} » is a name reserved by {2}": "El nombre del archivo/carpeta « {1} » es un nombre reservado por {2}",
+  "Error The {0}'s name is a name reserved by {1}": "El nombre del {0} es un nombre reservado por {1}",
+  "Error The name of the {0} « {1} » is too long ({2} characters; limit: {3} characters)": "El nombre de « {1} » es demasiado largo ({2} caracteres; límite: {3} caracteres)",
+  "Error The {0}'s name is too long ({1} characters; limit: {2} characters)": "El nombre del {0} es demasiado largo ({1} caracteres; límite: {2} caracteres)",
+  "Helpers parent folder": "carpeta superior",
+  "Helpers space": "espacio",
   "Your Twake Desktop authorizations have been revoked": "Your Twake Desktop authorizations have been revoked",
 
   "Dashboard Dashboard": "Consola",

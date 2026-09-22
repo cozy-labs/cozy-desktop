@@ -947,6 +947,7 @@ describe('Multiple sync errors', function() {
             code: syncErrors.MISSING_PERMISSIONS_CODE,
             status: 'Required',
             doc: null,
+            issue: null,
             side: null,
             links: null,
             lastSeenAt: Date.now()

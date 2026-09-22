@@ -57,6 +57,7 @@
   "CGUUpdated Their acceptance is required to continue using your Twake Workplace.": "Their acceptance is required to continue using your Twake Workplace.",
   "CGUUpdated Read the new ToS": "Read the new ToS",
 
+  "Helpers space": "space",
   "Your Twake Desktop authorizations have been revoked": "Your Twake Desktop authorizations have been revoked",
 
   "Dashboard Dashboard": "Dashboard",
@@ -88,6 +89,10 @@
   "Email Enter my Twake URL": "Enter my Twake URL",
   "Email Next": "Next",
 
+  "Error The {0}'s name contains forbidden characters: « {1} »": "The {0}'s name contains forbidden characters: « {1} »",
+  "Error The {0}'s name ends with a forbidden character: « {1} »": "The {0}'s name ends with a forbidden character: « {1} »",
+  "Error The {0}'s name is a name reserved by {1}": "The {0}'s name is a name reserved by {1}",
+  "Error The {0}'s name is too long ({1} characters; limit: {2} characters)": "The {0}'s name is too long ({1} characters; limit: {2} characters)",
   "Error Bad GLIBCXX version": "Twój system ma starą wersję biblioteki glibc. Musisz go zaktualizować do nowszej wersji, przeczytaj szczegóły na stronie https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Twake Workplace or its owner's. This could also mean that the note is out of sync.": "Check that the note still exists either on your Twake Workplace or its owner's. This could also mean that the note is out of sync.",
   "Error Your Twake Workplace's disk space is saturated": "Your Twake Workplace's disk space is saturated",
