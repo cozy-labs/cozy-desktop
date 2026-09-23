@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -107,6 +107,17 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Save node modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -140,7 +151,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -176,6 +187,17 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Save node modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -210,7 +232,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -246,6 +268,17 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Save node modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -285,7 +318,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -303,6 +336,17 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Save node modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Build assets
         run: yarn build
       - name: Build package
