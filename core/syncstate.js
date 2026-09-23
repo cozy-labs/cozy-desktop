@@ -26,6 +26,19 @@ export type UserAlert = {
     docType: string,
     path: string,
   },
+  // First detected incompatibility carried explicitly (only one is shown)
+  issue: ?{
+    issueType: string,
+    name: ?string,
+    path: ?string,
+    platform: ?string,
+    docType: ?string,
+    chars: ?string[],
+    reservedName: ?string,
+    forbiddenLastChar: ?string,
+    maxBytes: ?number,
+    sizeBytes: ?number,
+  },
   links: ?{ self: string },
   status: UserActionStatus,
   lastSeenAt: ?number
@@ -67,6 +80,7 @@ const makeAlert = (
 ) /*: UserAlert */ => {
   const { doc } = err
   const links = err.links || (err.originalErr && err.originalErr.links)
+  const issue = doc && doc.incompatibilities && doc.incompatibilities[0]
 
   return {
     seq: err.seq || seq || null,
@@ -74,6 +88,30 @@ const makeAlert = (
     code: err.code,
     side: side || null,
     doc: doc ? { id: doc._id, docType: doc.docType, path: doc.path } : null,
+    // ponytail: on ne transporte que la première incompatibilité détectée,
+    // suffisante puisque l'interface n'en affiche qu'une seule ;
+    // les clés sont renommées pour être utilisables en Elm ('type' est un
+    // mot réservé) et aplaties pour les détails optionnels
+    issue: issue
+      ? {
+          issueType: issue.type,
+          name: issue.name || null,
+          path: issue.path || (issue.type === 'pathMaxBytes' ? doc.path : null),
+          platform: issue.platform || null,
+          docType: issue.docType || null,
+          chars: issue.reservedChars || null,
+          reservedName: issue.reservedName || null,
+          forbiddenLastChar: issue.forbiddenLastChar || null,
+          maxBytes:
+            issue.nameMaxBytes ||
+            issue.dirNameMaxBytes ||
+            issue.pathMaxBytes ||
+            null,
+          sizeBytes:
+            issue.pathBytes ||
+            (issue.name ? Buffer.byteLength(issue.name) : null)
+        }
+      : null,
     links: links || null,
     prereqPath: err.prereqPath || null,
     lastSeenAt: Date.now()

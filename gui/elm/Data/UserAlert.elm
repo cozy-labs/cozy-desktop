@@ -45,7 +45,36 @@ type Side
 
 
 type alias SynchronizationErrorInfo =
-    { status : UserActionStatus, seq : Int, id : String, docType : String, path : String, side : Maybe Side, prereqPath : Maybe String, lastSeenAt : Time.Posix }
+    { status : UserActionStatus, seq : Int, id : String, docType : String, path : String, side : Maybe Side, prereqPath : Maybe String, lastSeenAt : Time.Posix, issue : Maybe Issue }
+
+
+type alias EncodedIssue =
+    { issueType : String
+    , name : Maybe String
+    , path : Maybe String
+    , platform : Maybe String
+    , docType : Maybe String
+    , chars : Maybe (List String)
+    , reservedName : Maybe String
+    , forbiddenLastChar : Maybe String
+    , maxBytes : Maybe Int
+    , sizeBytes : Maybe Int
+    }
+
+
+type alias Issue =
+    { issueType : String
+    , name : Maybe String
+    , path : Maybe String
+    , platform : Maybe String
+    , docType : Maybe String
+    , chars : Maybe (List String)
+    , reservedName : Maybe String
+    , forbiddenLastChar : Maybe String
+    , maxBytes : Maybe Int
+    , sizeBytes : Maybe Int
+    , isParent : Bool
+    }
 
 
 type alias RemoteWarningInfo =
@@ -115,6 +144,19 @@ type alias EncodedUserAlert =
             { id : String
             , docType : String
             , path : String
+            , issue :
+                Maybe
+                    { issueType : String
+                    , name : Maybe String
+                    , path : Maybe String
+                    , platform : Maybe String
+                    , docType : Maybe String
+                    , chars : Maybe (List String)
+                    , reservedName : Maybe String
+                    , forbiddenLastChar : Maybe String
+                    , maxBytes : Maybe Int
+                    , sizeBytes : Maybe Int
+                    }
             }
     , links :
         Maybe
@@ -142,7 +184,7 @@ decode { seq, status, code, side, doc, links, prereqPath, lastSeenAt } =
         ( _, Just { self }, _ ) ->
             Just (RemoteWarning code { status = decodedStatus, link = self })
 
-        ( Just { id, docType, path }, _, Just num ) ->
+        ( Just { id, docType, path, issue }, _, Just num ) ->
             Just
                 (SynchronizationError code
                     { status = decodedStatus
@@ -153,11 +195,43 @@ decode { seq, status, code, side, doc, links, prereqPath, lastSeenAt } =
                     , side = decodedSide side
                     , prereqPath = prereqPath
                     , lastSeenAt = decodedLastSeenAt
+                    , issue = Maybe.map (decodeIssue path) issue
                     }
                 )
 
         _ ->
             Just (RemoteError code)
+
+
+decodeIssue : String -> EncodedIssue -> Issue
+decodeIssue docPath issue =
+    { issueType = issue.issueType
+    , name = issue.name
+    , path = issue.path
+    , platform = issue.platform
+    , docType = issue.docType
+    , chars = issue.chars
+    , reservedName = issue.reservedName
+    , forbiddenLastChar = issue.forbiddenLastChar
+    , maxBytes = issue.maxBytes
+    , sizeBytes = issue.sizeBytes
+    , isParent = issue.path /= Just docPath
+    }
+
+
+encodeIssue : Issue -> EncodedIssue
+encodeIssue issue =
+    { issueType = issue.issueType
+    , name = issue.name
+    , path = issue.path
+    , platform = issue.platform
+    , docType = issue.docType
+    , chars = issue.chars
+    , reservedName = issue.reservedName
+    , forbiddenLastChar = issue.forbiddenLastChar
+    , maxBytes = issue.maxBytes
+    , sizeBytes = issue.sizeBytes
+    }
 
 
 encode : UserAlert -> EncodedUserAlert
@@ -168,7 +242,7 @@ encode alert =
             , status = encodeUserActionStatus a.status
             , code = code
             , side = encodedSide a.side
-            , doc = Just { id = a.id, docType = a.docType, path = a.path }
+            , doc = Just { id = a.id, docType = a.docType, path = a.path, issue = Maybe.map encodeIssue a.issue }
             , links = Nothing
             , prereqPath = a.prereqPath
             , lastSeenAt = Just (Time.posixToMillis a.lastSeenAt)
@@ -472,16 +546,27 @@ viewByCode helpers alert =
                 [ actionButton helpers (SendCommand GiveUp alert) "UserAlert Got it" Primary ]
             }
 
-        SynchronizationError "IncompatibleDoc" { docType } ->
+        SynchronizationError "IncompatibleDoc" info ->
             let
                 localDocType =
-                    localDocTypeLabel docType
+                    localDocTypeLabel info.docType
+
+                content =
+                    incompatibleDocContent helpers info
+
+                fallback =
+                    [ helpers.interpolate [ localDocType ] "Error The {0}'s name either contains forbidden characters or is reserved or is too long for your Operating System."
+                    , "Error Try renaming it on Twake Drive without using special characters and choose a shorter name if necessary."
+                    ]
             in
             { title = "Error Document path incompatible with current OS"
             , content =
-                [ helpers.interpolate [ localDocType ] "Error The {0}'s name either contains forbidden characters or is reserved or is too long for your Operating System."
-                , "Error Try renaming it on Twake Drive without using special characters and choose a shorter name if necessary."
-                ]
+                case info.issue of
+                    Just issue ->
+                        content issue
+
+                    Nothing ->
+                        fallback
             , buttons =
                 [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
                 , actionButton helpers (SendCommand ShowDetails alert) "UserAlert Show details" Secondary
@@ -630,6 +715,96 @@ localDocTypeLabel docType =
 
     else
         "Helpers file"
+
+
+incompatibleDocContent : Helpers -> SynchronizationErrorInfo -> Issue -> List String
+incompatibleDocContent helpers info issue =
+    let
+        subjectLabel =
+            if issue.isParent then
+                "Helpers parent folder"
+
+            else
+                localDocTypeLabel (Maybe.withDefault info.docType issue.docType)
+
+        name =
+            Maybe.withDefault "" issue.name
+
+        platform =
+            case issue.platform of
+                Just "win32" ->
+                    "Windows"
+
+                Just "darwin" ->
+                    "macOS"
+
+                Just "linux" ->
+                    "Linux"
+
+                other ->
+                    Maybe.withDefault "" other
+
+        chars =
+            String.join ", " (Maybe.withDefault [] issue.chars)
+
+        lastChar =
+            case Maybe.withDefault "" issue.forbiddenLastChar of
+                " " ->
+                    helpers.t "Helpers space"
+
+                other ->
+                    other
+
+        max =
+            String.fromInt (Maybe.withDefault 0 issue.maxBytes)
+
+        size =
+            String.fromInt (Maybe.withDefault 0 issue.sizeBytes)
+
+        line =
+            case issue.issueType of
+                "reservedChars" ->
+                    if issue.isParent then
+                        helpers.interpolate [ subjectLabel, name, chars ] "Error The name of the {0} « {1} » contains forbidden characters: « {2} »"
+
+                    else
+                        helpers.interpolate [ subjectLabel, chars ] "Error The {0}'s name contains forbidden characters: « {1} »"
+
+                "reservedName" ->
+                    if issue.isParent then
+                        helpers.interpolate [ subjectLabel, name, platform ] "Error The name of the {0} « {1} » is a name reserved by {2}"
+
+                    else
+                        helpers.interpolate [ subjectLabel, platform ] "Error The {0}'s name is a name reserved by {1}"
+
+                "forbiddenLastChar" ->
+                    if issue.isParent then
+                        helpers.interpolate [ subjectLabel, name, lastChar ] "Error The name of the {0} « {1} » ends with a forbidden character: « {2} »"
+
+                    else
+                        helpers.interpolate [ subjectLabel, lastChar ] "Error The {0}'s name ends with a forbidden character: « {1} »"
+
+                "nameMaxBytes" ->
+                    if issue.isParent then
+                        helpers.interpolate [ subjectLabel, name, size, max ] "Error The name of the {0} « {1} » is too long ({2} characters; limit: {3} characters)"
+
+                    else
+                        helpers.interpolate [ subjectLabel, size, max ] "Error The {0}'s name is too long ({1} characters; limit: {2} characters)"
+
+                "dirNameMaxBytes" ->
+                    if issue.isParent then
+                        helpers.interpolate [ subjectLabel, name, size, max ] "Error The name of the {0} « {1} » is too long ({2} characters; limit: {3} characters)"
+
+                    else
+                        helpers.interpolate [ subjectLabel, size, max ] "Error The {0}'s name is too long ({1} characters; limit: {2} characters)"
+
+                "pathMaxBytes" ->
+                    helpers.interpolate [ info.path, size, max ] "Error The full path « {0} » is too long ({1} characters; limit: {2} characters)"
+
+                _ ->
+                    helpers.interpolate [ subjectLabel ] "Error The {0}'s name either contains forbidden characters or is reserved or is too long for your Operating System."
+    in
+    [ line, "Error Rename it on Twake Drive so it gets synced" ]
 
 
 alertContent : Helpers -> Platform -> List String -> List (Html Msg)

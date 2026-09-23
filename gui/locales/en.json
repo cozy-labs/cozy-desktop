@@ -57,6 +57,18 @@
   "CGUUpdated Their acceptance is required to continue using your Twake Workplace.": "Their acceptance is required to continue using your Twake Workplace.",
   "CGUUpdated Read the new ToS": "Read the new ToS",
 
+  "Error Rename it on Twake Drive so it gets synced": "Rename it on Twake Drive so it gets synced",
+  "Error The full path « {0} » is too long ({1} characters; limit: {2} characters)": "The full path « {0} » is too long ({1} characters; limit: {2} characters)",
+  "Error The name of the {0} « {1} » contains forbidden characters: « {2} »": "The name of the {0} « {1} » contains forbidden characters: « {2} »",
+  "Error The {0}'s name contains forbidden characters: « {1} »": "The {0}'s name contains forbidden characters: « {1} »",
+  "Error The name of the {0} « {1} » ends with a forbidden character: « {2} »": "The name of the {0} « {1} » ends with a forbidden character: « {2} »",
+  "Error The {0}'s name ends with a forbidden character: « {1} »": "The {0}'s name ends with a forbidden character: « {1} »",
+  "Error The name of the {0} « {1} » is a name reserved by {2}": "The name of the {0} « {1} » is a name reserved by {2}",
+  "Error The {0}'s name is a name reserved by {1}": "The {0}'s name is a name reserved by {1}",
+  "Error The name of the {0} « {1} » is too long ({2} characters; limit: {3} characters)": "The name of the {0} « {1} » is too long ({2} characters; limit: {3} characters)",
+  "Error The {0}'s name is too long ({1} characters; limit: {2} characters)": "The {0}'s name is too long ({1} characters; limit: {2} characters)",
+  "Helpers parent folder": "parent folder",
+  "Helpers space": "space",
   "Your Twake Desktop authorizations have been revoked": "Your Twake Desktop authorizations have been revoked",
 
   "Dashboard Dashboard": "Dashboard",

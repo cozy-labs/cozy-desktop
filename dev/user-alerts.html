@@ -12,117 +12,229 @@
     <body>
         <div id="container" role="application"></div>
         <script>
+            const NO_ISSUE = null;
+            const makeAlert = (seq, code, side, doc, links = null) => ({
+                seq, status: "Required", code, side,
+                doc: doc ? { id: doc.path, issue: NO_ISSUE, ...doc } : null,
+                links, prereqPath: null, lastSeenAt: Date.now() - seq * 60000
+            });
+            const makeIssue = (issueType, fields) => ({
+                issueType, name: null, path: null, platform: "win32", docType: null,
+                chars: null, reservedName: null, forbiddenLastChar: null,
+                maxBytes: null, sizeBytes: null, ...fields
+            });
+
             const ALERTS = [
                 {
                     label: "SynchronizationError — ConflictingName",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 1, status: "Required", code: "ConflictingName", side: "remote", doc: { docType: "text", path: "/Documents/report.docx" }, links: null, lastSeenAt: Date.now() - 0 }]
+                        userAlerts: [makeAlert(1, "ConflictingName", "remote", { docType: "text", path: "/Documents/report.docx" })]
                     }
                 },
                 {
                     label: "SynchronizationError — ExcludedDir",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 2, status: "Required", code: "ExcludedDir", side: "remote", doc: { docType: "directory", path: "/Photos" }, links: null, lastSeenAt: Date.now() - 60000 }]
+                        userAlerts: [makeAlert(2, "ExcludedDir", "remote", { docType: "directory", path: "/Photos" })]
                     }
                 },
                 {
                     label: "SynchronizationError — FileTooLarge",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 3, status: "Required", code: "FileTooLarge", side: "remote", doc: { docType: "code", path: "/backup/dump.sql" }, links: null, lastSeenAt: Date.now() - 300000 }]
+                        userAlerts: [makeAlert(3, "FileTooLarge", "remote", { docType: "code", path: "/backup/dump.sql" })]
                     }
                 },
                 {
-                    label: "SynchronizationError — IncompatibleDoc",
+                    label: "SynchronizationError — IncompatibleDoc — reservedChars (doc)",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 4, status: "Required", code: "IncompatibleDoc", side: "local", doc: { docType: "text", path: "/projects/foo/bar:test.txt" }, links: null, lastSeenAt: Date.now() - 600000 }]
+                        userAlerts: [makeAlert(4, "IncompatibleDoc", "local", {
+                            docType: "text", path: "projects/foo/rapport?.txt",
+                            issue: makeIssue("reservedChars", { name: "rapport?.txt", path: "projects/foo/rapport?.txt", docType: "file", chars: ["?"] })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — reservedChars (parent)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(5, "IncompatibleDoc", "local", {
+                            docType: "text", path: "projects/di:r/rapport.txt",
+                            issue: makeIssue("reservedChars", { name: "di:r", path: "projects/di:r", docType: "directory", chars: [":"] })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — reservedName (doc)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(6, "IncompatibleDoc", "local", {
+                            docType: "text", path: "projects/COM1.txt",
+                            issue: makeIssue("reservedName", { name: "COM1.txt", path: "projects/COM1.txt", docType: "file", reservedName: "COM1" })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — reservedName (parent)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(7, "IncompatibleDoc", "local", {
+                            docType: "text", path: "projects/CON/rapport.txt",
+                            issue: makeIssue("reservedName", { name: "CON", path: "projects/CON", docType: "directory", reservedName: "CON" })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — forbiddenLastChar (doc)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(8, "IncompatibleDoc", "local", {
+                            docType: "text", path: "projects/rapport.",
+                            issue: makeIssue("forbiddenLastChar", { name: "rapport.", path: "projects/rapport.", docType: "file", forbiddenLastChar: "." })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — forbiddenLastChar (parent)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(9, "IncompatibleDoc", "local", {
+                            docType: "text", path: "projects/Archives /rapport.txt",
+                            issue: makeIssue("forbiddenLastChar", { name: "Archives ", path: "projects/Archives ", docType: "directory", forbiddenLastChar: " " })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — dirNameMaxBytes (doc)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(10, "IncompatibleDoc", "local", {
+                            docType: "directory", path: `projects/${"a".repeat(250)}`,
+                            issue: makeIssue("dirNameMaxBytes", { name: "a".repeat(250), path: `projects/${"a".repeat(250)}`, docType: "directory", maxBytes: 243, sizeBytes: 250 })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — nameMaxBytes (doc)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(11, "IncompatibleDoc", "local", {
+                            docType: "text", path: `projects/${"b".repeat(300)}.txt`,
+                            issue: makeIssue("nameMaxBytes", { name: `${"b".repeat(300)}.txt`, path: `projects/${"b".repeat(300)}.txt`, docType: "file", maxBytes: 256, sizeBytes: 304 })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — dirNameMaxBytes (parent)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(12, "IncompatibleDoc", "local", {
+                            docType: "text", path: `projects/${"c".repeat(250)}/rapport.txt`,
+                            issue: makeIssue("dirNameMaxBytes", { name: "c".repeat(250), path: `projects/${"c".repeat(250)}`, docType: "directory", maxBytes: 243, sizeBytes: 250 })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — pathMaxBytes",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(13, "IncompatibleDoc", "local", {
+                            docType: "text", path: `projects/${"d".repeat(4200)}/rapport.txt`,
+                            issue: makeIssue("pathMaxBytes", { path: `projects/${"d".repeat(4200)}/rapport.txt`, docType: "file", maxBytes: 4095, sizeBytes: 4213 })
+                        })]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc — sans issue (fallback)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(14, "IncompatibleDoc", "local", { docType: "text", path: "/projects/foo/bar:test.txt" })]
                     }
                 },
                 {
                     label: "SynchronizationError — InvalidMetadata",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 5, status: "Required", code: "InvalidMetadata", side: "remote", doc: { docType: "code", path: "/docs/metadata.json" }, links: null, lastSeenAt: Date.now() - 1800000 }]
+                        userAlerts: [makeAlert(15, "InvalidMetadata", "remote", { docType: "code", path: "/docs/metadata.json" })]
                     }
                 },
                 {
                     label: "SynchronizationError — InvalidName",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 6, status: "Required", code: "InvalidName", side: "remote", doc: { docType: "spreadsheet", path: "/projects/data/file?.csv" }, links: null, lastSeenAt: Date.now() - 3600000 }]
+                        userAlerts: [makeAlert(16, "InvalidName", "remote", { docType: "spreadsheet", path: "/projects/data/file?.csv" })]
                     }
                 },
                 {
                     label: "SynchronizationError — MissingPermissions",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 7, status: "Required", code: "MissingPermissions", side: "local", doc: { docType: "pdf", path: "/shared/invoice.pdf" }, links: null, lastSeenAt: Date.now() - 7200000 }]
+                        userAlerts: [makeAlert(17, "MissingPermissions", "local", { docType: "pdf", path: "/shared/invoice.pdf" })]
                     }
                 },
                 {
                     label: "SynchronizationError — NeedsRemoteMerge",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 8, status: "Required", code: "NeedsRemoteMerge", side: "local", doc: { docType: "presentation", path: "/projects/presentation.pptx" }, links: null, lastSeenAt: Date.now() - 14400000 }]
+                        userAlerts: [makeAlert(18, "NeedsRemoteMerge", "local", { docType: "presentation", path: "/projects/presentation.pptx" })]
                     }
                 },
                 {
                     label: "SynchronizationError — NoCozySpace",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 9, status: "Required", code: "NoCozySpace", side: "remote", doc: { docType: "video", path: "/videos/demo.mp4" }, links: null, lastSeenAt: Date.now() - 28800000 }]
+                        userAlerts: [makeAlert(19, "NoCozySpace", "remote", { docType: "video", path: "/videos/demo.mp4" })]
                     }
                 },
                 {
                     label: "SynchronizationError — NoDiskSpace",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 10, status: "Required", code: "NoDiskSpace", side: "local", doc: { docType: "archive", path: "/downloads/archive.zip" }, links: null, lastSeenAt: Date.now() - 86400000 }]
+                        userAlerts: [makeAlert(20, "NoDiskSpace", "local", { docType: "archive", path: "/downloads/archive.zip" })]
                     }
                 },
                 {
                     label: "SynchronizationError — PathTooDeep",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 11, status: "Required", code: "PathTooDeep", side: "remote", doc: { docType: "text", path: "/a/b/c/d/e/f/g/file.txt" }, links: null, lastSeenAt: Date.now() - 172800000 }]
+                        userAlerts: [makeAlert(21, "PathTooDeep", "remote", { docType: "text", path: "/a/b/c/d/e/f/g/file.txt" })]
                     }
                 },
                 {
                     label: "SynchronizationError — RemoteMaintenance",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 12, status: "Required", code: "RemoteMaintenance", side: null, doc: { docType: "text", path: "/any/file.txt" }, links: null, lastSeenAt: Date.now() - 604800000 }]
+                        userAlerts: [makeAlert(22, "RemoteMaintenance", null, { docType: "text", path: "/any/file.txt" })]
                     }
                 },
                 {
                     label: "SynchronizationError — UnknownRemoteError",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: 13, status: "Required", code: "UnknownRemoteError", side: "remote", doc: { docType: "text", path: "/docs/notes.txt" }, links: null, lastSeenAt: Date.now() - 2592000000 }]
+                        userAlerts: [makeAlert(23, "UnknownRemoteError", "remote", { docType: "text", path: "/docs/notes.txt" })]
                     }
                 },
                 {
                     label: "RemoteWarning — UserActionRequired",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: null, status: "Required", code: "UserActionRequired", side: null, doc: null, links: { self: "https://cozy.example.com/tos" }, lastSeenAt: Date.now() - 120000 }]
+                        userAlerts: [makeAlert(0, "UserActionRequired", null, null, { self: "https://cozy.example.com/tos" })]
                     }
                 },
                 {
                     label: "RemoteError — UnknownRemoteError",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: null, status: "Required", code: "UnknownRemoteError", side: null, doc: null, links: null, lastSeenAt: Date.now() - 1800000 }]
+                        userAlerts: [{ seq: null, status: "Required", code: "UnknownRemoteError", side: null, doc: null, links: null, prereqPath: null, lastSeenAt: Date.now() - 1800000 }]
                     }
                 },
                 {
                     label: "RemoteError — RemoteMaintenance",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: null, status: "Required", code: "RemoteMaintenance", side: null, doc: null, links: null, lastSeenAt: Date.now() - 3600000 }]
+                        userAlerts: [{ seq: null, status: "Required", code: "RemoteMaintenance", side: null, doc: null, links: null, prereqPath: null, lastSeenAt: Date.now() - 3600000 }]
                     }
                 }
             ];
@@ -134,6 +246,7 @@
                 currentIndex = index;
                 const { label, data } = ALERTS[index];
                 app.ports.syncState.send(data);
+                app.ports.showAlertsPanel.send(true);
                 document.getElementById("current-label").textContent = label;
                 document.getElementById("current-num").textContent = `${index + 1} / ${ALERTS.length}`;
             }
@@ -146,6 +259,7 @@
                     userAlerts: ALERTS.map(a => a.data.userAlerts[0])
                 };
                 app.ports.syncState.send(all);
+                app.ports.showAlertsPanel.send(true);
                 document.getElementById("current-label").textContent = "ALL ALERTS";
                 document.getElementById("current-num").textContent = `${ALERTS.length} alerts`;
             }
@@ -166,6 +280,7 @@
                 window.sendAlerts = sendAlerts;
                 window.sendAll = sendAll;
                 window.app = app;
+                window.ALERTS = ALERTS;
 
                 document.getElementById("controls").classList.remove("disabled");
                 sendAll();
