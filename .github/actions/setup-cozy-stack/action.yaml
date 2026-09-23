@@ -48,18 +48,30 @@ runs:
 
     - name: Cache Go dependencies
       id: cache-go-deps
-      uses: actions/cache@v6
+      uses: actions/cache/restore@v6
       env:
         cache-name: cache-go-deps
       with:
         path: |
           ${{ env.GOPATH }}
         key: ${{ runner.os }}-v${{ env.GO_VERSION }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-v${{ env.GO_VERSION }}-${{ env.cache-name }}-
 
     - name: Download cozy-stack
       if: ${{ steps.cache-go-deps.outputs.cache-hit != 'true' }}
       shell: bash
       run: go install github.com/cozy/cozy-stack@latest
+
+    - name: Save Go dependencies cache
+      if: ${{ steps.cache-go-deps.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@v6
+      env:
+        cache-name: cache-go-deps
+      with:
+        path: |
+          ${{ env.GOPATH }}
+        key: ${{ runner.os }}-v${{ env.GO_VERSION }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
 
     - name: Create cozy-stack storage
       shell: bash
