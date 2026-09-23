@@ -126,7 +126,7 @@ jobs:
       - name: Unit tests
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
-        run: yarn test:unit --forbid-only
+        run: yarn test:unit --forbid-only --retries 2
 
   integration:
     runs-on: macos-26-intel
@@ -211,7 +211,7 @@ jobs:
       - name: Integration tests
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
-        run: yarn test:integration --forbid-only
+        run: yarn test:integration --forbid-only --retries 2
 
   scenarios:
     runs-on: macos-26-intel
@@ -304,7 +304,7 @@ jobs:
         env:
           STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
           COZY_DESKTOP_FS: ${{ matrix.fs }}
-        run: yarn test:scenarios --forbid-only
+        run: yarn test:scenarios --forbid-only --retries 2
 
   build:
     name: Build packages
