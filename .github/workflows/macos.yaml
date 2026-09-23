@@ -46,21 +46,8 @@ jobs:
     steps:
       - uses: styfle/cancel-workflow-action@5df4e62aed82ea1f787d2a02ab3dbfcaa49ffdd1
 
-  docker_cache_key:
-    name: 'Fetch latest version tag of cozy-app-dev'
-    runs-on: ubuntu-latest
-    steps:
-      - id: cozy-app-dev
-        run: |
-          version=$(curl -Ls --fail -q "https://hub.docker.com/v2/repositories/cozy/cozy-app-dev/tags/?page_size=1000" | \
-              jq '.results | .[] | .name' -r | \
-              head -n 2 | tail -1)
-          echo "key=docker-${{ runner.os }}-${{ hashFiles('docker-compose.yml') }}-$(echo $version)" >> $GITHUB_OUTPUT
-    outputs:
-      key: ${{ steps.cozy-app-dev.outputs.key }}
-
   unit:
-    needs: [cancel, docker_cache_key]
+    needs: cancel
     runs-on: macos-26-intel
     name: Unit tests
     strategy:
@@ -82,16 +69,6 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup Docker
         uses: douglascamata/setup-docker-macos-action@v1.1.0
-      - name: Install Bash for docker-cache
-        id: install-bash
-        run: |
-          brew install bash
-          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
-      - name: Cache Docker images.
-        uses: cozy-labs/docker-cache@0.7.0
-        with:
-          key: ${{ needs.docker_cache_key.outputs.key }}
-          bash: ${{ steps.install-bash.outputs.bash-path }}
       - name: Setup node
         uses: actions/setup-node@v7
         with:
@@ -140,7 +117,7 @@ jobs:
         run: yarn test:unit --forbid-only
 
   integration:
-    needs: [cancel, docker_cache_key]
+    needs: cancel
     runs-on: macos-26-intel
     name: Integration tests
     strategy:
@@ -162,16 +139,6 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup Docker
         uses: douglascamata/setup-docker-macos-action@v1.1.0
-      - name: Install Bash for docker-cache
-        id: install-bash
-        run: |
-          brew install bash
-          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
-      - name: Cache Docker images.
-        uses: cozy-labs/docker-cache@0.7.0
-        with:
-          key: ${{ needs.docker_cache_key.outputs.key }}
-          bash: ${{ steps.install-bash.outputs.bash-path }}
       - name: Setup node
         uses: actions/setup-node@v7
         with:
@@ -220,7 +187,7 @@ jobs:
         run: yarn test:integration --forbid-only
 
   scenarios:
-    needs: [cancel, docker_cache_key]
+    needs: cancel
     runs-on: macos-26-intel
     name: Scenarios
     strategy:
@@ -243,16 +210,6 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup Docker
         uses: douglascamata/setup-docker-macos-action@v1.1.0
-      - name: Install Bash for docker-cache
-        id: install-bash
-        run: |
-          brew install bash
-          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
-      - name: Cache Docker images.
-        uses: cozy-labs/docker-cache@0.7.0
-        with:
-          key: ${{ needs.docker_cache_key.outputs.key }}
-          bash: ${{ steps.install-bash.outputs.bash-path }}
       - name: Setup node
         uses: actions/setup-node@v7
         with:
