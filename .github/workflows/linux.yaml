@@ -84,7 +84,7 @@ jobs:
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
-      - name: Save node modules cache
+      - name: Save node_modules cache
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         env:
@@ -155,7 +155,7 @@ jobs:
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
-      - name: Save node modules cache
+      - name: Save node_modules cache
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         env:
@@ -222,7 +222,7 @@ jobs:
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
-      - name: Save node modules cache
+      - name: Save node_modules cache
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         env:
@@ -266,7 +266,7 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
-      - name: Save node modules cache
+      - name: Save node_modules cache
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         env:
@@ -283,12 +283,15 @@ jobs:
         uses: ./.github/actions/build-and-publish
         with:
           gh-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Save artifacts
+      - name: Save latest-linux.yml
         uses: actions/upload-artifact@v7
         with:
-            name: Binaries
-            path: |
-                ${{ github.workspace }}/dist/latest-linux.yml
-                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.AppImage
-            retention-days: 5
-            compression-level: 0
+          path: ${{ github.workspace }}/dist/latest-linux.yml
+          archive: false
+          retention-days: 5
+      - name: Save AppImage
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.AppImage
+          archive: false
+          retention-days: 5

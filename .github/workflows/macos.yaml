@@ -84,7 +84,7 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
-      - name: Save node modules cache
+      - name: Save node_modules cache
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         env:
@@ -154,7 +154,7 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
-      - name: Save node modules cache
+      - name: Save node_modules cache
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         env:
@@ -225,7 +225,7 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
-      - name: Save node modules cache
+      - name: Save node_modules cache
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         env:
@@ -293,7 +293,7 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
-      - name: Save node modules cache
+      - name: Save node_modules cache
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         env:
@@ -315,14 +315,22 @@ jobs:
           apple-id: "${{ secrets.apple_id }}"
           apple-id-password: "${{ secrets.apple_id_password }}"
           apple-team-id: "${{ secrets.apple_team_id }}"
-      - name: Save artifacts
+      - name: Save latest-mac.yml
         uses: actions/upload-artifact@v7
         with:
-            name: dist-mac-${{ runner.arch }}
-            path: |
-                ${{ github.workspace }}/dist/latest*.yml
-                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.dmg
-                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.zip
-            retention-days: 5
-            compression-level: 0
+          path: ${{ github.workspace }}/dist/latest*.yml
+          archive: false
+          retention-days: 5
+      - name: Save dmg
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.dmg
+          archive: false
+          retention-days: 5
+      - name: Save zip
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.zip
+          archive: false
+          retention-days: 5
 
