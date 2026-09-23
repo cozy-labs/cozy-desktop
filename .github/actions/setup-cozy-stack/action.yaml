@@ -48,7 +48,7 @@ runs:
 
     - name: Cache Go dependencies
       id: cache-go-deps
-      uses: actions/cache@v3
+      uses: actions/cache@v6
       env:
         cache-name: cache-go-deps
       with:

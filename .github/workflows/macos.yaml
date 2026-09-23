@@ -68,10 +68,10 @@ jobs:
         fs: ['APFS']
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -93,11 +93,11 @@ jobs:
           key: ${{ needs.docker_cache_key.outputs.key }}
           bash: ${{ steps.install-bash.outputs.bash-path }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
@@ -137,10 +137,10 @@ jobs:
         fs: ['APFS']
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -162,11 +162,11 @@ jobs:
           key: ${{ needs.docker_cache_key.outputs.key }}
           bash: ${{ steps.install-bash.outputs.bash-path }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
@@ -207,10 +207,10 @@ jobs:
         fs: ['APFS', 'HFS+']
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -232,11 +232,11 @@ jobs:
           key: ${{ needs.docker_cache_key.outputs.key }}
           bash: ${{ steps.install-bash.outputs.bash-path }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
@@ -282,10 +282,10 @@ jobs:
         os: [macos-26-intel, macos-26]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -295,7 +295,7 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup python
@@ -315,7 +315,7 @@ jobs:
           apple-id-password: "${{ secrets.apple_id_password }}"
           apple-team-id: "${{ secrets.apple_team_id }}"
       - name: Save artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
             name: dist-mac-${{ runner.arch }}
             path: |
