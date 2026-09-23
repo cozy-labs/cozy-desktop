@@ -3,6 +3,10 @@ services:
   cozy:
     container_name: twake-desktop-stack
     image: cozy/cozy-app-dev:latest
+    environment:
+      # Let `test/setup.sh` write the host's `COZY_DESKTOP_DIR` to
+      # `.env.test` (falls back to `tmp` when unset).
+      - COZY_DESKTOP_DIR
     ports:
       - "8080:8080"
       - "8025:8025"
