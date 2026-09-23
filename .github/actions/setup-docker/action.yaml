@@ -1,0 +1,58 @@
+name: Setup Docker
+author: Erwan Guyader
+description: Installs Lima, Colima and the Docker client from prebuilt binaries and starts a Colima VM.
+
+inputs:
+  lima-version:
+    description: 'Lima version to install (https://github.com/lima-vm/lima/releases)'
+    required: false
+    default: v2.2.0
+  colima-version:
+    description: 'Colima version to install (https://github.com/abiosoft/colima/releases)'
+    required: false
+    default: v0.10.3
+  docker-version:
+    description: 'Docker client version to install (https://download.docker.com/mac/static/stable/x86_64/)'
+    required: false
+    default: '29.8.1'
+  compose-version:
+    description: 'Docker Compose version to install (https://github.com/docker/compose/releases)'
+    required: false
+    default: v5.5.1
+
+runs:
+  using: composite
+  steps:
+    - name: Install Lima
+      shell: bash
+      env:
+        LIMA_VERSION: ${{ inputs.lima-version }}
+      run: |
+        curl -fsSL "https://github.com/lima-vm/lima/releases/download/$LIMA_VERSION/lima-${LIMA_VERSION#v}-$(uname -s)-$(uname -m).tar.gz" \
+          | sudo tar Cxz /usr/local
+
+    - name: Install Colima
+      shell: bash
+      env:
+        COLIMA_VERSION: ${{ inputs.colima-version }}
+      run: |
+        curl -fsSL "https://github.com/abiosoft/colima/releases/download/$COLIMA_VERSION/colima-$(uname -s)-$(uname -m)" \
+          -o /tmp/colima
+        sudo install -m 0755 /tmp/colima /usr/local/bin/colima
+
+    - name: Install Docker client and Compose
+      shell: bash
+      env:
+        DOCKER_VERSION: ${{ inputs.docker-version }}
+        COMPOSE_VERSION: ${{ inputs.compose-version }}
+      run: |
+        curl -fsSL "https://download.docker.com/mac/static/stable/x86_64/docker-$DOCKER_VERSION.tgz" \
+          | sudo tar Cxz /usr/local/bin --strip-components 1 docker/docker
+        mkdir -p ~/.docker/cli-plugins
+        curl -fsSL "https://github.com/docker/compose/releases/download/$COMPOSE_VERSION/docker-compose-darwin-x86_64" \
+          -o ~/.docker/cli-plugins/docker-compose
+        chmod +x ~/.docker/cli-plugins/docker-compose
+
+    - name: Start Colima
+      shell: bash
+      run: colima start
