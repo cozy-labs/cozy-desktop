@@ -14,6 +14,10 @@ on:
     paths-ignore:
       - '.github/workflows/linux.yaml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   COZY_DESKTOP_DIR: "${{ github.workspace }}/twake-desktop"
   COZY_STACK_STORAGE: "${{ github.workspace }}/storage"
@@ -39,28 +43,7 @@ env:
   OS_IDENTITY_API_VERSION: "3"
 
 jobs:
-  cancel:
-    name: 'Cancel Previous Runs'
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - uses: styfle/cancel-workflow-action@5df4e62aed82ea1f787d2a02ab3dbfcaa49ffdd1
-
-  docker_cache_key:
-    name: 'Fetch latest version tag of cozy-app-dev'
-    runs-on: ubuntu-latest
-    steps:
-      - id: cozy-app-dev
-        run: |
-          version=$(curl -Ls --fail -q "https://hub.docker.com/v2/repositories/cozy/cozy-app-dev/tags/?page_size=1000" | \
-              jq '.results | .[] | .name' -r | \
-              head -n 2 | tail -1)
-          echo "key=docker-${{ runner.os }}-${{ hashFiles('docker-compose.yml') }}-$(echo $version)" >> $GITHUB_OUTPUT
-    outputs:
-      key: ${{ steps.cozy-app-dev.outputs.key }}
-
   unit:
-    needs: [cancel, docker_cache_key]
     runs-on: macos-26-intel
     name: Unit tests
     strategy:
@@ -68,10 +51,10 @@ jobs:
         fs: ['APFS']
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -80,24 +63,30 @@ jobs:
             ~/.cache/electron
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
-      - name: Setup Docker
-        uses: douglascamata/setup-docker-macos-action@v1.1.0
-      - name: Install Bash for docker-cache
-        id: install-bash
-        run: |
-          brew install bash
-          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
-      - name: Cache Docker images.
-        uses: cozy-labs/docker-cache@0.7.0
+      - name: Restore Lima cache
+        id: cache-lima
+        uses: actions/cache/restore@v6
+        env:
+          cache-name: cache-lima
         with:
-          key: ${{ needs.docker_cache_key.outputs.key }}
-          bash: ${{ steps.install-bash.outputs.bash-path }}
+          path: ~/Library/Caches/lima
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
+      - name: Setup Docker
+        uses: ./.github/actions/setup-docker
+      - name: Save Lima cache
+        if: ${{ steps.cache-lima.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-lima
+        with:
+          path: ~/Library/Caches/lima
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
@@ -107,6 +96,17 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Save node_modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -129,7 +129,6 @@ jobs:
         run: yarn test:unit --forbid-only
 
   integration:
-    needs: [cancel, docker_cache_key]
     runs-on: macos-26-intel
     name: Integration tests
     strategy:
@@ -137,10 +136,10 @@ jobs:
         fs: ['APFS']
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -149,24 +148,30 @@ jobs:
             ~/.cache/electron
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
-      - name: Setup Docker
-        uses: douglascamata/setup-docker-macos-action@v1.1.0
-      - name: Install Bash for docker-cache
-        id: install-bash
-        run: |
-          brew install bash
-          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
-      - name: Cache Docker images.
-        uses: cozy-labs/docker-cache@0.7.0
+      - name: Restore Lima cache
+        id: cache-lima
+        uses: actions/cache/restore@v6
+        env:
+          cache-name: cache-lima
         with:
-          key: ${{ needs.docker_cache_key.outputs.key }}
-          bash: ${{ steps.install-bash.outputs.bash-path }}
+          path: ~/Library/Caches/lima
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
+      - name: Setup Docker
+        uses: ./.github/actions/setup-docker
+      - name: Save Lima cache
+        if: ${{ steps.cache-lima.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-lima
+        with:
+          path: ~/Library/Caches/lima
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
@@ -176,6 +181,17 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Save node_modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -198,7 +214,6 @@ jobs:
         run: yarn test:integration --forbid-only
 
   scenarios:
-    needs: [cancel, docker_cache_key]
     runs-on: macos-26-intel
     name: Scenarios
     strategy:
@@ -207,10 +222,10 @@ jobs:
         fs: ['APFS', 'HFS+']
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -219,24 +234,30 @@ jobs:
             ~/.cache/electron
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
-      - name: Setup Docker
-        uses: douglascamata/setup-docker-macos-action@v1.1.0
-      - name: Install Bash for docker-cache
-        id: install-bash
-        run: |
-          brew install bash
-          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
-      - name: Cache Docker images.
-        uses: cozy-labs/docker-cache@0.7.0
+      - name: Restore Lima cache
+        id: cache-lima
+        uses: actions/cache/restore@v6
+        env:
+          cache-name: cache-lima
         with:
-          key: ${{ needs.docker_cache_key.outputs.key }}
-          bash: ${{ steps.install-bash.outputs.bash-path }}
+          path: ~/Library/Caches/lima
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
+      - name: Setup Docker
+        uses: ./.github/actions/setup-docker
+      - name: Save Lima cache
+        if: ${{ steps.cache-lima.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-lima
+        with:
+          path: ~/Library/Caches/lima
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
@@ -246,6 +267,17 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Save node_modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -275,17 +307,16 @@ jobs:
         run: yarn test:scenarios --forbid-only
 
   build:
-    needs: cancel
     name: Build packages
     strategy:
       matrix:
         os: [macos-26-intel, macos-26]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -295,7 +326,7 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup python
@@ -303,6 +334,17 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Save node_modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Build assets
         run: yarn build
       - name: Build package
@@ -314,14 +356,22 @@ jobs:
           apple-id: "${{ secrets.apple_id }}"
           apple-id-password: "${{ secrets.apple_id_password }}"
           apple-team-id: "${{ secrets.apple_team_id }}"
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
+      - name: Save latest-mac.yml
+        uses: actions/upload-artifact@v7
         with:
-            name: dist-mac-${{ runner.arch }}
-            path: |
-                ${{ github.workspace }}/dist/latest*.yml
-                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.dmg
-                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.zip
-            retention-days: 5
-            compression-level: 0
+          path: ${{ github.workspace }}/dist/latest*.yml
+          archive: false
+          retention-days: 5
+      - name: Save dmg
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.dmg
+          archive: false
+          retention-days: 5
+      - name: Save zip
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.zip
+          archive: false
+          retention-days: 5
 

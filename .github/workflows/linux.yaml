@@ -14,6 +14,10 @@ on:
     paths-ignore:
       - '.github/workflows/macos.yaml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   COZY_DESKTOP_DIR: "${{ github.workspace }}/twake-desktop"
   COZY_STACK_STORAGE: "${{ github.workspace }}/storage"
@@ -30,22 +34,14 @@ env:
   COUCHDB_PASSWORD: "password"
 
 jobs:
-  cancel:
-    name: 'Cancel Previous Runs'
-    runs-on: ubuntu-22.04
-    timeout-minutes: 3
-    steps:
-      - uses: styfle/cancel-workflow-action@5df4e62aed82ea1f787d2a02ab3dbfcaa49ffdd1
-
   unit:
-    needs: cancel
     runs-on: ubuntu-22.04
     name: Lint & Unit tests
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -55,11 +51,11 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
@@ -84,6 +80,17 @@ jobs:
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
+      - name: Save node_modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Build elm
@@ -98,14 +105,13 @@ jobs:
         run: yarn test:unit --forbid-only
 
   integration:
-    needs: cancel
     runs-on: ubuntu-22.04
     name: Integration tests
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -115,11 +121,11 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
@@ -144,13 +150,23 @@ jobs:
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
+      - name: Save node_modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Integration tests
         run: yarn test:integration --forbid-only
 
   scenarios:
-    needs: cancel
     runs-on: ubuntu-22.04
     name: Scenarios
     strategy:
@@ -158,10 +174,10 @@ jobs:
         stopped_client: ['', 'STOPPED']
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -171,11 +187,11 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
@@ -200,6 +216,17 @@ jobs:
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
+      - name: Save node_modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Scenarios
@@ -208,14 +235,13 @@ jobs:
         run: yarn test:scenarios --forbid-only
 
   build:
-    needs: cancel
     runs-on: ubuntu-22.04
     name: Build packages
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -225,7 +251,7 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup python
@@ -233,18 +259,32 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Save node_modules cache
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Build assets
         run: yarn build
       - name: Build packages
         uses: ./.github/actions/build-and-publish
         with:
           gh-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
+      - name: Save latest-linux.yml
+        uses: actions/upload-artifact@v7
         with:
-            name: Binaries
-            path: |
-                ${{ github.workspace }}/dist/latest-linux.yml
-                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.AppImage
-            retention-days: 5
-            compression-level: 0
+          path: ${{ github.workspace }}/dist/latest-linux.yml
+          archive: false
+          retention-days: 5
+      - name: Save AppImage
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.AppImage
+          archive: false
+          retention-days: 5
