@@ -14,6 +14,10 @@ on:
     paths-ignore:
       - '.github/workflows/linux.yaml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   COZY_DESKTOP_DIR: "${{ github.workspace }}/twake-desktop"
   COZY_STACK_STORAGE: "${{ github.workspace }}/storage"
@@ -39,15 +43,7 @@ env:
   OS_IDENTITY_API_VERSION: "3"
 
 jobs:
-  cancel:
-    name: 'Cancel Previous Runs'
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - uses: styfle/cancel-workflow-action@5df4e62aed82ea1f787d2a02ab3dbfcaa49ffdd1
-
   unit:
-    needs: cancel
     runs-on: macos-26-intel
     name: Unit tests
     strategy:
@@ -133,7 +129,6 @@ jobs:
         run: yarn test:unit --forbid-only
 
   integration:
-    needs: cancel
     runs-on: macos-26-intel
     name: Integration tests
     strategy:
@@ -219,7 +214,6 @@ jobs:
         run: yarn test:integration --forbid-only
 
   scenarios:
-    needs: cancel
     runs-on: macos-26-intel
     name: Scenarios
     strategy:
@@ -313,7 +307,6 @@ jobs:
         run: yarn test:scenarios --forbid-only
 
   build:
-    needs: cancel
     name: Build packages
     strategy:
       matrix:
