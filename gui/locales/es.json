@@ -235,6 +235,9 @@
   "OAuth If something went wrong, you can retry the login by clicking on the button below.": "Si algo salió mal, puede volver a intentar el inicio de sesión haciendo clic en el botón de abajo.",
   "OAuth Retry": "Reintentar",
   "OAuth Contact support": "Contactar con el soporte",
+  "OAuth Login in your browser": "Inicio de sesión en su navegador",
+  "OAuth Your login page will open in your default browser in a few seconds.": "Su página de inicio de sesión se abrirá en su navegador predeterminado en unos segundos.",
+  "OAuth Open my browser now": "Abrir mi navegador ahora",
 
   "Quotation Start": "“",
   "Quotation End": "”",
