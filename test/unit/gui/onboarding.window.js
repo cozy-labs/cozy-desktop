@@ -1,3 +1,5 @@
+const { session } = require('electron')
+const should = require('should')
 const sinon = require('sinon')
 
 const autoLaunch = require('../../../gui/js/autolaunch')
@@ -28,7 +30,8 @@ describe('onboarding.window', () => {
       sinon.assert.callOrder(
         onboardingWindow.focus,
         onboardingWindow.desktop.registerWithDelegationCode,
-        onboardingWindow.sendSyncConfig
+        onboardingWindow.sendSyncConfig,
+        autoLaunch.setEnabled
       )
       sinon.assert.calledWithExactly(
         onboardingWindow.desktop.registerWithDelegationCode,
@@ -36,6 +39,64 @@ describe('onboarding.window', () => {
         'delegation-code'
       )
       sinon.assert.calledOnce(onboardingWindow.sendSyncConfig)
+      sinon.assert.calledOnceWithExactly(autoLaunch.setEnabled, true)
+    })
+  })
+
+  describe('onRegisterWithURL', () => {
+    const sandbox = sinon.createSandbox()
+    let event
+    let onboardingWindow
+    let syncSession
+
+    beforeEach(() => {
+      syncSession = {
+        clearStorageData: sandbox.stub().resolves(),
+        webRequest: {
+          onBeforeRedirect: sandbox.stub(),
+          onBeforeRequest: sandbox.stub()
+        }
+      }
+      sandbox.stub(session, 'fromPartition').returns(syncSession)
+      sandbox.stub(autoLaunch, 'setEnabled')
+
+      onboardingWindow = Object.create(OnboardingWM.prototype)
+      onboardingWindow.closeOAuthView = sandbox.spy()
+      onboardingWindow.desktop = {
+        checkCozyUrl: sandbox.stub().resolves('https://example.mycozy.cloud'),
+        config: {},
+        registerWithURL: sandbox.stub().resolves('file:///registered')
+      }
+      onboardingWindow.win = {
+        loadURL: sandbox.spy(),
+        webContents: { once: sandbox.spy() }
+      }
+      event = { sender: {} }
+    })
+
+    afterEach(() => sandbox.restore())
+
+    it('enables autolaunch after registering with a Cozy URL', async () => {
+      await onboardingWindow.onRegisterWithURL(event, {
+        cozyUrl: 'example.mycozy.cloud',
+        location: 'Paris'
+      })
+
+      should(onboardingWindow.desktop.config.cozyUrl).equal(
+        'https://example.mycozy.cloud'
+      )
+      sinon.assert.calledWith(
+        onboardingWindow.desktop.registerWithURL,
+        'https://example.mycozy.cloud',
+        'Paris',
+        sinon.match.func
+      )
+      sinon.assert.callOrder(
+        onboardingWindow.win.loadURL,
+        onboardingWindow.closeOAuthView,
+        autoLaunch.setEnabled
+      )
+      sinon.assert.calledOnceWithExactly(autoLaunch.setEnabled, true)
     })
   })
 })
