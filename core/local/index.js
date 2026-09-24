@@ -13,6 +13,7 @@ const autoBind = require('auto-bind')
 const bluebird = require('bluebird')
 const fse = require('fs-extra')
 
+const { LocalFsError } = require('./errors')
 const stater = require('./stater')
 const metadata = require('../metadata')
 const syncDir = require('./sync_dir')
@@ -138,7 +139,7 @@ class Local /*:: implements Reader, Writer */ {
     const filePath = this.abspath(doc.path)
     return new Promise((resolve, reject) => {
       const contentStream = fse.createReadStream(filePath)
-      contentStream.on('error', reject)
+      contentStream.on('error', err => reject(new LocalFsError(err)))
       contentStream.on('open', () => {
         // Once the promise is resolved, it can't be rejected so we should not
         // expect later stream errors to reject it and can thus remove the
@@ -279,7 +280,7 @@ class Local /*:: implements Reader, Writer */ {
                   this.events.emit('transfer-copy', doc)
                   fse.copy(existingFilePath, tmpFile, err => {
                     if (err) {
-                      reject(err)
+                      reject(new LocalFsError(err))
                     } else {
                       resolve()
                     }

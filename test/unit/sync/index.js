@@ -124,6 +124,25 @@ describe('Sync', function() {
       should(this.sync.runSyncLoop).have.been.called()
     })
 
+    it('clears remote blocking causes on watcher success', async function() {
+      this.remote.watcher.stop = sinon.stub()
+      await this.sync.start()
+
+      await this.sync.blockSyncFor({
+        err: remoteErrors.wrapError(
+          new FetchError(
+            { type: 'system', code: 'ENOTFOUND', errno: 'ENOTFOUND' },
+            'request to ... failed, reason: net::ERR_NAME_NOT_RESOLVED'
+          )
+        )
+      })
+      should(this.sync._blockedCauses.size).equal(1)
+
+      this.remote.watcher.onSuccess.firstCall.args[0]()
+
+      should(this.sync._blockedCauses.size).equal(0)
+    })
+
     context('if local watcher fails to start', () => {
       beforeEach(function() {
         this.local.start = sinon.stub().rejects(new Error('failed'))
@@ -1209,8 +1228,8 @@ describe('Sync', function() {
             should(this.remote.watcher.start).have.been.called()
           })
 
-          it('clears RemoteWatcher blocking causes', function() {
-            should(this.sync._blockedCauses.size).equal(0)
+          it('keeps RemoteWatcher blocking causes until a watch run succeeds', function() {
+            should(this.sync._blockedCauses.size).equal(1)
           })
 
           it('unblocks the lifecycle', function() {

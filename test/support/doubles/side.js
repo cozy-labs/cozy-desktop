@@ -30,6 +30,9 @@ module.exports = function stubSide(name /*: SideName */) /*: Writer */ {
   double.name = name
   double.watcher = {}
   double.watcher.running = new Promise(() => {})
+  double.watcher.onError = sinon.stub()
+  double.watcher.onSuccess = sinon.stub()
+  double.watcher.onFatal = sinon.stub()
 
   return double
 }

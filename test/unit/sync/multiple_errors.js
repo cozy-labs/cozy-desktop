@@ -57,6 +57,7 @@ describe('Multiple sync errors', function() {
       start: sinon.stub().resolves(),
       stop: sinon.stub().resolves(),
       onError: sinon.stub(),
+      onSuccess: sinon.stub(),
       onFatal: sinon.stub()
     }
     this.remote.ping = sinon.stub().resolves(true)
@@ -670,6 +671,10 @@ describe('Multiple sync errors', function() {
       should(this.events.emit).have.been.calledWith('online')
       should(this.remote.watcher.start).have.been.called()
       should(this.sync.lifecycle.blocked).be.false()
+      should(this.sync._blockedCauses.size).equal(1)
+
+      this.sync.resolveRemoteCauses()
+
       should(this.sync._blockedCauses.size).equal(0)
     })
 
@@ -931,6 +936,80 @@ describe('Multiple sync errors', function() {
     it('is a no-op for an unknown key', function() {
       this.sync.resolveBlockingCause('nonexistent')
 
+      should(this.events.emit).not.have.been.calledWith('user-action-done')
+    })
+  })
+
+  describe('retryAll', () => {
+    beforeEach(function() {
+      this.events = new SyncState()
+      this.sync.events = this.events
+      sinon.spy(this.events, 'emit')
+    })
+
+    afterEach(function() {
+      this.events.emit.restore()
+    })
+
+    it('keeps the user alert when retrying a cause without change', async function() {
+      const err = retryableError(null, remoteErrors.UNKNOWN_REMOTE_ERROR_CODE)
+
+      await this.sync.blockSyncFor({ err })
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
+
+      await syncErrors.retryAll(
+        Array.from(this.sync._blockedCauses.values()),
+        this.sync
+      )
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
+      should(this.events.emit).not.have.been.calledWith('user-action-done')
+    })
+
+    it('removes the user alert when a watcher run succeeds', async function() {
+      const err = retryableError(null, remoteErrors.UNKNOWN_REMOTE_ERROR_CODE)
+
+      await this.sync.blockSyncFor({ err })
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
+
+      this.sync.resolveRemoteCauses()
+
+      should(this.sync._blockedCauses.size).equal(0)
+      should(this.events.state.userAlerts.length).equal(0)
+      should(this.events.emit).have.been.calledWith('user-action-done', err)
+    })
+
+    it('keeps the user alert when retrying a cause with change', async function() {
+      const doc = await builders
+        .metafile()
+        .path('retry-with-change')
+        .sides({ local: 1 })
+        .create()
+      const change = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 42,
+        operation: { type: 'ADD', side: 'remote' }
+      }
+
+      await this.sync.blockSyncFor({ err: blockingSyncError(doc), change })
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
+
+      await syncErrors.retryAll(
+        Array.from(this.sync._blockedCauses.values()),
+        this.sync
+      )
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
       should(this.events.emit).not.have.been.calledWith('user-action-done')
     })
   })
