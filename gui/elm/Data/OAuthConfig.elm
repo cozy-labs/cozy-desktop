@@ -4,6 +4,7 @@ port module Data.OAuthConfig exposing (OAuthConfig, gotOIDCLoginURL, init, setEr
 type alias OAuthConfig =
     { error : String
     , busy : Bool
+    , browserOpened : Bool
     , oidcLoginURL : Maybe String
     }
 
@@ -12,6 +13,7 @@ init : OAuthConfig
 init =
     { error = ""
     , busy = False
+    , browserOpened = False
     , oidcLoginURL = Nothing
     }
 
