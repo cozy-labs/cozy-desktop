@@ -220,6 +220,9 @@
   "MarkdownViewer Why do I see this?": "Why do I see this?",
 
   "OAuth Could not login": "Nuk mundëm ta përfundojmë hyrjen. Ju lutemi provoni përsëri ose kontrolloni që një Twake Workplace të jetë lidhur me llogarinë tuaj.",
+  "OAuth Login in your browser": "Hyrja në shfletuesin tuaj",
+  "OAuth Your login page will open in your default browser in a few seconds.": "Faqja juaj e hyrjes do të hapet në shfletuesin tuaj të parazgjedhur pas disa sekondash.",
+  "OAuth Open my browser now": "Hap tani shfletuesin tim",
 
   "Quotation Start": "“",
   "Quotation End": "”",

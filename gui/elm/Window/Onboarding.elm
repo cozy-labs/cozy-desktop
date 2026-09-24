@@ -71,10 +71,10 @@ update msg model =
                 Welcome.LoginWithTwake ->
                     let
                         ( context, cmd ) =
-                            OAuth.startLogin model.context
+                            OAuth.informAndLogin model.context
                     in
                     ( { model | context = context, page = OAuthPage }
-                    , cmd
+                    , Cmd.map OAuthMsg cmd
                     )
 
                 Welcome.LoginWithCustomServer ->
@@ -137,10 +137,10 @@ update msg model =
                 ( context, cmd ) =
                     model.context
                         |> OAuth.setOIDCLoginURL oidcLoginUrl
-                        |> OAuth.startLogin
+                        |> OAuth.informAndLogin
             in
             ( { model | context = context, page = OAuthPage }
-            , cmd
+            , Cmd.map OAuthMsg cmd
             )
 
         RegistrationDone syncConfig ->
