@@ -45,14 +45,14 @@ view helpers context =
                 [ span [] [ text (helpers.t "Welcome Sign in") ] ]
             , a
                 [ class "c-btn c-btn--secondary c-btn--full"
-                , href "https://sign-up.twake.app?register"
-                ]
-                [ span [] [ text (helpers.t "Welcome Create account") ] ]
-            , a
-                [ class "more-info"
                 , href "#"
                 , onClick LoginWithCustomServer
                 ]
-                [ text (helpers.t "Welcome Use my organization server") ]
+                [ span [] [ text (helpers.t "Welcome Sign in with company account") ] ]
+            , a
+                [ class "more-info"
+                , href "https://sign-up.twake.app?register"
+                ]
+                [ text (helpers.t "Welcome Create account") ]
             ]
         ]
