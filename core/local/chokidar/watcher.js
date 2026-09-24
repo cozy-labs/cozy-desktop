@@ -145,11 +145,13 @@ class LocalWatcher {
       usePolling: process.platform === 'win32',
       // Filter out artifacts from editors with atomic writes
       atomic: true,
-      // Poll newly created files to detect when the write is finished
-      awaitWriteFinish: {
-        pollInterval: 200,
-        stabilityThreshold: 1000
-      },
+      // Poll newly created files to detect when the write is finished.
+      // In tests, files are written synchronously and initial scans are
+      // numerous: wait as little as possible for write stability.
+      awaitWriteFinish:
+        process.env.NODE_ENV === 'test'
+          ? { pollInterval: 50, stabilityThreshold: 50 }
+          : { pollInterval: 200, stabilityThreshold: 1000 },
       // With node 0.10 on linux, only polling is available
       interval: 1000,
       binaryInterval: 2000
@@ -265,16 +267,9 @@ class LocalWatcher {
     // Stop underlying Chokidar watcher
     await this.watcher.close()
     this.watcher = null
-    // Flush buffer and stop flushes loop
-    this.buffer.flush()
+    // Flush buffer, awaiting event processing, and stop flushes loop
+    await this.buffer.flush()
     this.buffer.switchMode('idle')
-
-    if (!force) {
-      // Give some time for awaitWriteFinish events to be managed
-      return new Promise(resolve => {
-        setTimeout(resolve, 1000)
-      })
-    }
   }
 
   // TODO: Start checksuming as soon as an add/change event is buffered

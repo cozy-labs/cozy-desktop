@@ -58,6 +58,7 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: false # Managed by setup-cozy-stack
       - name: Setup python
         run: pip install setuptools
       - name: Setup CouchDB
@@ -128,6 +129,7 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: false # Managed by setup-cozy-stack
       - name: Setup python
         run: pip install setuptools
       - name: Setup CouchDB
@@ -194,6 +196,7 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: false # Managed by setup-cozy-stack
       - name: Setup python
         run: pip install setuptools
       - name: Setup CouchDB
