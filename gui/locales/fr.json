@@ -336,7 +336,6 @@
 
   "Welcome Sign in": "Me connecter",
   "Welcome Create account": "Créer un compte",
-  "Welcome Enter my Twake URL": "Entrer l'URL de mon Twake",
-  "Welcome Use my organization server": "Utiliser le serveur de mon organisation",
+  "Welcome Sign in with company account": "Me connecter avec un compte d'entreprise",
   "Welcome Your own private cloud": "Bienvenue sur Twake Desktop !"
 }
