@@ -1,5 +1,66 @@
 # Twake Desktop: Changelog
 
+## 5.6.0-beta.1 - 2026-09-24
+
+Improvements for all users:
+
+- When signing in with a company SSO account, the onboarding welcome screen
+  pushed users toward creating a new Twake account instead of signing in.
+  The welcome screen now offers a prominent "Sign in with company account"
+  button and relegates account creation to a discreet link.
+- When a document could not be synchronized because of its name or its
+  location, the alert only said it was incompatible, without explaining why.
+  The alert now gives the precise reason (forbidden character, reserved name,
+  name or path too long) and says whether the problem lies with the document
+  itself or with one of its parent folders.
+- When a change was blocked and skipped, the changes depending on it were
+  still attempted on the next sync, failing pointlessly or creating orphaned
+  files.
+  Dependent changes are now skipped too, and the alert names the blocking
+  path, which you can click to reveal in your file manager.
+- When a temporary server or network problem raised a sync alert, the alert
+  stayed displayed indefinitely even after the problem was gone.
+  Alerts are now cleared automatically as soon as the Cozy responds again,
+  without waiting for a manual retry.
+- When the network dropped in the middle of a file transfer, an alert about
+  an unknown error was shown instead of the offline status, and a failing
+  local disk could be mistaken for a network outage.
+  Network interruptions during transfers are now recognized and retried
+  quickly, like other connection losses, while local file system errors are
+  no longer confused with network problems.
+- After signing in via SSO in the browser, the onboarding window stayed in
+  the background instead of coming back to the foreground.
+  The window is now focused, and restored if it was minimized, as soon as the
+  login completes.
+- When the OAuth login or registration failed during onboarding, no error
+  was shown and the setup continued to the sync configuration anyway.
+  The failure is now displayed on the onboarding page and the flow stops
+  there instead of continuing.
+- Moving a folder while one of its files had been replaced (with the app
+  stopped) produced a conflict copy instead of keeping the replaced file.
+  The deletion of the old child is now applied before the parent folder
+  move, so the replacement file is preserved.
+- The Spanish translation was incomplete and contained several mistakes.
+  It has been completed and corrected.
+
+Improvements for Windows users:
+
+- Twake Desktop disappeared from Windows' installed apps list: the app
+  deleted its own uninstall entry at every launch, and old installers could
+  leave duplicate entries behind.
+  The app no longer touches its uninstall entry, and the installer now
+  removes the orphaned entries left by previous versions.
+
+Improvements for macOS users:
+
+- On Apple Silicon Macs, the automatic update downloaded the Intel version
+  of the app instead of the Apple Silicon one.
+  The update now fetches the Apple Silicon build.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.5.0 - 2026-07-06
 
 Improvements for all users:
