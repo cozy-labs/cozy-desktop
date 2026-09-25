@@ -20,12 +20,14 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 // Substring expected in the rendered alert content, by alert index.
 // Rendering language depends on the ?lang= param of the page (default fr),
 // but here Elm falls back to the English key when the locale file is absent.
+// For issues on the document itself, the message does not repeat its name:
+// it is already shown in the file line above, only the offending detail is.
 const EXPECTED = {
-  '3': '« rapport?.txt »', // IncompatibleDoc — reservedChars (doc)
+  '3': '« ? »', // IncompatibleDoc — reservedChars (doc)
   '4': '« di:r »', // IncompatibleDoc — reservedChars (parent)
-  '5': '« COM1.txt »', // IncompatibleDoc — reservedName (doc)
+  '5': 'réservé par Windows', // IncompatibleDoc — reservedName (doc)
   '6': '« CON »', // IncompatibleDoc — reservedName (parent)
-  '7': '« rapport. »', // IncompatibleDoc — forbiddenLastChar (doc)
+  '7': '« . »', // IncompatibleDoc — forbiddenLastChar (doc)
   '8': '« espace »', // IncompatibleDoc — forbiddenLastChar (parent, trailing space)
   '9': '243', // IncompatibleDoc — dirNameMaxBytes (doc)
   '10': '256', // IncompatibleDoc — nameMaxBytes (doc)

@@ -88,10 +88,6 @@ const makeAlert = (
     code: err.code,
     side: side || null,
     doc: doc ? { id: doc._id, docType: doc.docType, path: doc.path } : null,
-    // ponytail: on ne transporte que la première incompatibilité détectée,
-    // suffisante puisque l'interface n'en affiche qu'une seule ;
-    // les clés sont renommées pour être utilisables en Elm ('type' est un
-    // mot réservé) et aplaties pour les détails optionnels
     issue: issue
       ? {
           issueType: issue.type,

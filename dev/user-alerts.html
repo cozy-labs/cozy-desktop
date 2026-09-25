@@ -12,12 +12,14 @@
     <body>
         <div id="container" role="application"></div>
         <script>
-            const NO_ISSUE = null;
-            const makeAlert = (seq, code, side, doc, links = null) => ({
-                seq, status: "Required", code, side,
-                doc: doc ? { id: doc.path, issue: NO_ISSUE, ...doc } : null,
-                links, prereqPath: null, lastSeenAt: Date.now() - seq * 60000
-            });
+            const makeAlert = (seq, code, side, doc, links = null) => {
+                const { issue = null, ...docProps } = doc || {};
+                return {
+                    seq, status: "Required", code, side,
+                    doc: doc ? { id: doc.path, ...docProps } : null,
+                    issue, links, prereqPath: null, lastSeenAt: Date.now() - seq * 60000
+                };
+            };
             const makeIssue = (issueType, fields) => ({
                 issueType, name: null, path: null, platform: "win32", docType: null,
                 chars: null, reservedName: null, forbiddenLastChar: null,
@@ -227,14 +229,14 @@
                     label: "RemoteError — UnknownRemoteError",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: null, status: "Required", code: "UnknownRemoteError", side: null, doc: null, links: null, prereqPath: null, lastSeenAt: Date.now() - 1800000 }]
+                        userAlerts: [{ seq: null, status: "Required", code: "UnknownRemoteError", side: null, doc: null, issue: null, links: null, prereqPath: null, lastSeenAt: Date.now() - 1800000 }]
                     }
                 },
                 {
                     label: "RemoteError — RemoteMaintenance",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
-                        userAlerts: [{ seq: null, status: "Required", code: "RemoteMaintenance", side: null, doc: null, links: null, prereqPath: null, lastSeenAt: Date.now() - 3600000 }]
+                        userAlerts: [{ seq: null, status: "Required", code: "RemoteMaintenance", side: null, doc: null, issue: null, links: null, prereqPath: null, lastSeenAt: Date.now() - 3600000 }]
                     }
                 }
             ];
