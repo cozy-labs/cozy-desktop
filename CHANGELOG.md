@@ -1,5 +1,20 @@
 # Twake Desktop: Changelog
 
+## 5.6.0-beta.2 - 2026-09-25
+
+Improvements for all users:
+
+- When a document could not be synchronized because its name or location was
+  incompatible with your system, no alert was shown at all: you had no way of
+  knowing the document was blocked.
+  Incompatibility alerts are displayed again, with the precise reason (forbidden
+  character, reserved name, name or path too long) and whether the problem lies
+  with the document itself or one of its parent folders.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.6.0-beta.1 - 2026-09-24
 
 Improvements for all users:
