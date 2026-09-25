@@ -139,25 +139,8 @@ type alias EncodedUserAlert =
     , status : String
     , code : String
     , side : Maybe String
-    , doc :
-        Maybe
-            { id : String
-            , docType : String
-            , path : String
-            , issue :
-                Maybe
-                    { issueType : String
-                    , name : Maybe String
-                    , path : Maybe String
-                    , platform : Maybe String
-                    , docType : Maybe String
-                    , chars : Maybe (List String)
-                    , reservedName : Maybe String
-                    , forbiddenLastChar : Maybe String
-                    , maxBytes : Maybe Int
-                    , sizeBytes : Maybe Int
-                    }
-            }
+    , doc : Maybe { id : String, docType : String, path : String }
+    , issue : Maybe EncodedIssue
     , links :
         Maybe
             { self : String
@@ -172,7 +155,7 @@ type alias EncodedCommand =
 
 
 decode : EncodedUserAlert -> Maybe UserAlert
-decode { seq, status, code, side, doc, links, prereqPath, lastSeenAt } =
+decode { seq, status, code, side, doc, issue, links, prereqPath, lastSeenAt } =
     let
         decodedStatus =
             decodeUserActionStatus status
@@ -184,7 +167,7 @@ decode { seq, status, code, side, doc, links, prereqPath, lastSeenAt } =
         ( _, Just { self }, _ ) ->
             Just (RemoteWarning code { status = decodedStatus, link = self })
 
-        ( Just { id, docType, path, issue }, _, Just num ) ->
+        ( Just { id, docType, path }, _, Just num ) ->
             Just
                 (SynchronizationError code
                     { status = decodedStatus
@@ -242,7 +225,8 @@ encode alert =
             , status = encodeUserActionStatus a.status
             , code = code
             , side = encodedSide a.side
-            , doc = Just { id = a.id, docType = a.docType, path = a.path, issue = Maybe.map encodeIssue a.issue }
+            , doc = Just { id = a.id, docType = a.docType, path = a.path }
+            , issue = Maybe.map encodeIssue a.issue
             , links = Nothing
             , prereqPath = a.prereqPath
             , lastSeenAt = Just (Time.posixToMillis a.lastSeenAt)
@@ -254,6 +238,7 @@ encode alert =
             , code = code
             , side = Nothing
             , doc = Nothing
+            , issue = Nothing
             , links = Nothing
             , prereqPath = Nothing
             , lastSeenAt = Nothing
@@ -266,6 +251,7 @@ encode alert =
             , side = Nothing
             , links = Just { self = a.link }
             , doc = Nothing
+            , issue = Nothing
             , prereqPath = Nothing
             , lastSeenAt = Nothing
             }
