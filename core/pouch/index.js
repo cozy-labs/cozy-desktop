@@ -50,13 +50,20 @@ class Pouch {
   nextLockId: number
   */
 
+  openDatabase() {
+    // LevelDB only creates the last path component of dbPath: its parent
+    // directories must already exist.
+    fse.ensureDirSync(this.config.dbPath)
+    this.db = new PouchDB(this.config.dbPath)
+    this.db.setMaxListeners(100)
+    this.db.on('error', err => log.error(err))
+  }
+
   constructor(config /*: Config */) {
     this.config = config
     this.nextLockId = 0
     this._lock = { id: this.nextLockId++, promise: Promise.resolve(null) }
-    this.db = new PouchDB(this.config.dbPath)
-    this.db.setMaxListeners(100)
-    this.db.on('error', err => log.error(err))
+    this.openDatabase()
     this.updater = async.queue(async task => {
       const taskDoc = await this.byIdMaybe(task._id)
       if (taskDoc) return this.db.put({ ...task, _rev: taskDoc._rev })
@@ -69,10 +76,7 @@ class Pouch {
   // Create database and recreate all filters
   async resetDatabase() {
     await this.db.destroy()
-    await fse.ensureDir(this.config.dbPath)
-    this.db = new PouchDB(this.config.dbPath)
-    this.db.setMaxListeners(100)
-    this.db.on('error', err => log.error(err))
+    this.openDatabase()
     return this.addAllViews()
   }
 
