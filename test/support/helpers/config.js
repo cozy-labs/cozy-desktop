@@ -17,6 +17,16 @@ module.exports = {
     this.basePath = path.resolve(`${parent}/test/${+new Date()}`)
 
     this.config = config.load(findBasePath(this.basePath))
+    if (process.env.COZY_DESKTOP_DB_PATH) {
+      // Keep the leveldown database off the mounted volume on CI runners:
+      // only the synchronized directory itself needs to live on the
+      // filesystem being tested.
+      this.config.dbPath = path.resolve(
+        process.env.COZY_DESKTOP_DB_PATH,
+        path.basename(this.basePath),
+        'db'
+      )
+    }
     this.config.syncPath = path.join(this.basePath, DEFAULT_SYNC_DIR_NAME)
     this.config.cozyUrl = COZY_URL
     this.config.persist()

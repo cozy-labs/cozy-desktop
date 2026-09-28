@@ -121,6 +121,7 @@ jobs:
       - name: Unit tests
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
+          COZY_DESKTOP_DB_PATH: "${{ runner.temp }}/twake-desktop-db"
         run: yarn test:unit --forbid-only --retries 2
 
   integration:
@@ -202,6 +203,7 @@ jobs:
       - name: Integration tests
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
+          COZY_DESKTOP_DB_PATH: "${{ runner.temp }}/twake-desktop-db"
         run: yarn test:integration --forbid-only --retries 2
 
   scenarios:
@@ -291,6 +293,7 @@ jobs:
         env:
           STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
           COZY_DESKTOP_FS: ${{ matrix.fs }}
+          COZY_DESKTOP_DB_PATH: "${{ runner.temp }}/twake-desktop-db"
         run: yarn test:scenarios --forbid-only --retries 2
 
   build:
