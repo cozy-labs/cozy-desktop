@@ -205,6 +205,32 @@ function injectChokidarBreakpoints(eventsFile) {
   }
 }
 
+function trackLocalEvents(helpers) {
+  let sawEvent = false
+  const onEvent = () => {
+    sawEvent = true
+  }
+  helpers.local.side.events.on('buffering-start', onEvent)
+  return () => {
+    helpers.local.side.events.off('buffering-start', onEvent)
+    return sawEvent
+  }
+}
+
+async function waitLocalEventsFlushed(helpers, fallbackInMs) {
+  // Wait for all local events to be flushed or a fallback time limit. The
+  // fallback is only a safety net for events that never came: the watcher
+  // still flushes buffered stragglers on stop().
+  await Promise.race([
+    new Promise(resolve => {
+      helpers.local.side.events.on('local-end', resolve)
+    }),
+    new Promise(resolve => {
+      setTimeout(resolve, fallbackInMs)
+    })
+  ])
+}
+
 async function runLocalChannel(scenario, channelCapture, helpers) {
   if (scenario.useCaptures) {
     log.info('simulating channel watcher start')
@@ -212,6 +238,10 @@ async function runLocalChannel(scenario, channelCapture, helpers) {
   } else {
     await helpers.local.side.watcher.start()
   }
+
+  const stopTrackingLocalEvents = scenario.useCaptures
+    ? null
+    : trackLocalEvents(helpers)
 
   const inodeChanges = await runActions(
     scenario,
@@ -243,16 +273,13 @@ async function runLocalChannel(scenario, channelCapture, helpers) {
     await helpers.local.simulateChannelEvents(channelCapture.batches)
   }
 
-  // Wait for all local events to be flushed or a 10s time limit in case no
-  // events are fired.
-  await Promise.race([
-    new Promise(resolve => {
-      helpers.local.side.events.on('local-end', resolve)
-    }),
-    new Promise(resolve => {
-      setTimeout(resolve, 10000)
-    })
-  ])
+  // Wait for all local events to be flushed or fall back quickly when the
+  // watcher saw no event at all (the channel watcher does not emit
+  // per-event signals, so captures keep the long fallback).
+  const sawLocalEvent = stopTrackingLocalEvents
+    ? stopTrackingLocalEvents()
+    : true
+  await waitLocalEventsFlushed(helpers, sawLocalEvent ? 10000 : 1000)
 
   if (!scenario.useCaptures) {
     await helpers.local.side.watcher.stop()
@@ -342,18 +369,12 @@ async function runLocalChokidarWithoutCaptures(scenario, eventsFile, helpers) {
 
   await helpers.local.side.watcher.start()
 
+  const stopTrackingLocalEvents = trackLocalEvents(helpers)
+
   await runActions(scenario, helpers.local.syncDir.abspath)
 
-  // Wait for all local events to be flushed or a 10s time limit in case no
-  // events are fired.
-  await Promise.race([
-    new Promise(resolve => {
-      helpers.local.side.events.on('local-end', resolve)
-    }),
-    new Promise(resolve => {
-      setTimeout(resolve, 10000)
-    })
-  ])
+  const sawLocalEvent = stopTrackingLocalEvents()
+  await waitLocalEventsFlushed(helpers, sawLocalEvent ? 10000 : 1000)
   await helpers.local.side.watcher.stop()
 
   await helpers.syncAll()
@@ -396,19 +417,15 @@ async function runRemote(scenario, helpers) {
   await remoteCaptureHelpers.runActions(scenario, helpers)
 
   await helpers.local.side.watcher.start()
+
+  const stopTrackingLocalEvents = trackLocalEvents(helpers)
+
   await helpers.remote.pullChanges()
   // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
   await helpers.syncAll()
-  // Wait for all local events to be flushed or a 10s time limit in case no
-  // events are fired.
-  await Promise.race([
-    new Promise(resolve => {
-      helpers.local.side.events.on('local-end', resolve)
-    }),
-    new Promise(resolve => {
-      setTimeout(resolve, 10000)
-    })
-  ])
+
+  const sawLocalEvent = stopTrackingLocalEvents()
+  await waitLocalEventsFlushed(helpers, sawLocalEvent ? 10000 : 1000)
   await helpers.local.side.watcher.stop()
   await helpers.syncAll()
 
