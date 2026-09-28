@@ -59,6 +59,7 @@ module.exports = {
   fileMoveIdenticalOffline,
   dirMoveFromUnlinkAdd,
   fileMoveFromAddUnlink,
+  fileMoveFromFileUpdateDeletion,
   dirMoveFromAddUnlink,
   dirMoveOverwriteOnMacAPFS,
   dirRenamingCaseOnlyFromAddAdd,
@@ -196,6 +197,9 @@ function maybeDeleteFile(a /*: ?LocalChange */) /*: ?LocalFileDeletion */ {
 }
 function maybeDeleteFolder(a /*: ?LocalChange */) /*: ?LocalDirDeletion */ {
   return a && a.type === 'DirDeletion' ? a : null
+}
+function maybeUpdateFile(a /*: ?LocalChange */) /*: ?LocalFileUpdate */ {
+  return a && a.type === 'FileUpdate' ? a : null
 }
 
 function find /*:: <T> */(
@@ -500,6 +504,39 @@ function fileMoveFromFileDeletionChange(
 
   log.debug(
     'unlink(src) + change(dst -> newDst) = FileMove.overwrite(src, newDst)',
+    {
+      oldpath: fileMove.old && fileMove.old.path,
+      path: fileMove.path,
+      ino: fileMove.ino,
+      wip: fileMove.wip
+    }
+  )
+
+  return [fileMove, false]
+}
+
+function fileMoveFromFileUpdateDeletion(
+  sameInodeChange /*: ?LocalChange */,
+  e /*: LocalFileUnlinked */
+) {
+  const fileUpdate /*: ?LocalFileUpdate */ = maybeUpdateFile(sameInodeChange)
+  if (!fileUpdate) return
+  // Same path means the file was updated then deleted, not overwritten by a
+  // move: leave the update and the deletion alone.
+  // Same for a file unknown to the metadata: the update at the destination is
+  // all we have and the deletion will be ignored for lack of an inode.
+  if (!e.old || fileUpdate.path.normalize() === e.path.normalize()) return
+  const fileMove /*: Object */ = build('FileMove', fileUpdate.path, {
+    stats: fileUpdate.stats,
+    md5sum: fileUpdate.md5sum,
+    overwrite: fileUpdate.old,
+    old: e.old,
+    ino: fileUpdate.stats.ino,
+    wip: fileUpdate.wip
+  })
+
+  log.debug(
+    'change(dst -> newDst) + unlink(src) = FileMove.overwrite(src, newDst)',
     {
       oldpath: fileMove.old && fileMove.old.path,
       path: fileMove.path,

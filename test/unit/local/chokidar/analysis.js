@@ -2319,3 +2319,99 @@ onPlatform('darwin', () => {
     })
   })
 })
+
+describe('core/local/chokidar/analysis reversed overwrite move', () => {
+  const sideName = 'local'
+  const builders = new Builders()
+
+  describe('FileMove.overwrite(src => dst)', () => {
+    const srcDoc = builders
+      .metafile()
+      .path('src/dir/file')
+      .ino(11)
+      .build()
+    const dstDoc = builders
+      .metafile()
+      .path('dst/dir/file')
+      .ino(4)
+      .build()
+    const stats = { ino: 11 }
+    const md5sum = 'overwriter'
+    const expected /*: LocalChange[] */ = [
+      {
+        sideName,
+        type: 'FileMove',
+        path: 'dst/dir/file',
+        stats,
+        ino: 11,
+        md5sum,
+        old: srcDoc,
+        overwrite: dstDoc
+      }
+    ]
+
+    it('is built from unlink(src) + change(dst)', () => {
+      const events /*: LocalEvent[] */ = [
+        { type: 'unlink', path: 'src/dir/file', old: srcDoc },
+        { type: 'change', path: 'dst/dir/file', stats, md5sum, old: dstDoc }
+      ]
+      const pendingChanges /*: LocalChange[] */ = []
+
+      should(
+        analysis(events, {
+          pendingChanges,
+          initialScanParams: { done: true }
+        })
+      ).deepEqual(expected)
+      should(pendingChanges).deepEqual([])
+    })
+
+    it('is also built from change(dst) + unlink(src)', () => {
+      const events /*: LocalEvent[] */ = [
+        { type: 'change', path: 'dst/dir/file', stats, md5sum, old: dstDoc },
+        { type: 'unlink', path: 'src/dir/file', old: srcDoc }
+      ]
+      const pendingChanges /*: LocalChange[] */ = []
+
+      should(
+        analysis(events, {
+          pendingChanges,
+          initialScanParams: { done: true }
+        })
+      ).deepEqual(expected)
+      should(pendingChanges).deepEqual([])
+    })
+  })
+
+  describe('change(x) + unlink(x) at the same path', () => {
+    it('is an update followed by a deletion, not a move', () => {
+      const old = builders
+        .metafile()
+        .path('foo')
+        .ino(1)
+        .build()
+      const stats = { ino: 1 }
+      const events /*: LocalEvent[] */ = [
+        { type: 'change', path: 'foo', stats, md5sum: 'yata', old },
+        { type: 'unlink', path: 'foo', old }
+      ]
+      const pendingChanges /*: LocalChange[] */ = []
+
+      should(
+        analysis(events, {
+          pendingChanges,
+          initialScanParams: { done: true }
+        })
+      ).deepEqual([
+        {
+          sideName,
+          type: 'FileDeletion',
+          path: 'foo',
+          ino: 1,
+          old
+        }
+      ])
+      should(pendingChanges).deepEqual([])
+    })
+  })
+})
