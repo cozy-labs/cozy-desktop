@@ -1408,13 +1408,13 @@ class Sync {
       change.doc = await this.pouch.put(doc, { checkInvariants: false })
     } catch (err) {
       if (err.status === 409) {
-        // If the doc can't be saved, because of a new revision, we can ignore
-        // it as this change will be replaced by the latest doc change.
-        const was = await this.pouch.byIdMaybe(doc._id)
-        log.info(`could not update doc errors for change ${change.seq}`, {
+        // A conflict means a watcher merged a new revision of this doc: a new
+        // change is in the feed and this error belongs to the superseded
+        // change, so don't record it. The new change will be processed by the
+        // sync loop (success → cause resolved, failure → fresh cause).
+        log.debug(`could not update doc errors for change ${change.seq}`, {
           err,
-          doc,
-          was
+          path: doc.path
         })
       } else {
         // If we could not update the doc errors for another reason than a

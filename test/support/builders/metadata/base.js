@@ -276,6 +276,11 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  noErrors() /*: this */ {
+    delete this.doc.errors
+    return this
+  }
+
   skipped(code /*: string */) /*: this */ {
     this.doc.skipped = code
     return this
