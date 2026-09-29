@@ -34,7 +34,8 @@ const EXPECTED = {
   '10': '256', // IncompatibleDoc — nameMaxBytes (doc)
   '11': '243', // IncompatibleDoc — dirNameMaxBytes (parent)
   '12': '4095', // IncompatibleDoc — pathMaxBytes
-  '13': 'contient des caractères interdits ou est trop long' // IncompatibleDoc — fallback
+  '13': 'contient des caractères interdits ou est trop long', // IncompatibleDoc — fallback
+  '14': 'dossier' // IncompatibleDoc — dirNameMaxBytes on a folder doc: the label comes from localDocTypeLabel
 }
 
 describe('User alerts dev page', function() {

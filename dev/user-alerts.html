@@ -156,6 +156,16 @@
                     }
                 },
                 {
+                    label: "SynchronizationError — IncompatibleDoc — dirNameMaxBytes (dossier)",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [makeAlert(24, "IncompatibleDoc", "local", {
+                            docType: "folder", path: `projects/${"e".repeat(250)}`,
+                            issue: makeIssue("dirNameMaxBytes", { name: "e".repeat(250), path: `projects/${"e".repeat(250)}`, docType: "folder", maxBytes: 243, sizeBytes: 250 })
+                        })]
+                    }
+                },
+                {
                     label: "SynchronizationError — InvalidMetadata",
                     data: {
                         status: "user-alert", remaining: 0, errors: [],
