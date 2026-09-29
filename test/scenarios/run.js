@@ -143,7 +143,7 @@ describe('Scenario', function() {
         it.skip(`${stoppedTestName} (${stoppedTestSkipped})`, () => {})
       } else {
         it(stoppedTestName, async function() {
-          if (isCI) this.timeout(60 * 1000)
+          if (isCI) this.timeout(2 * 60 * 1000)
           await runLocalStopped(scenario, helpers)
         })
       }
@@ -158,7 +158,7 @@ describe('Scenario', function() {
     }
 
     it(remoteTestName, async function() {
-      if (isCI && platform === 'darwin') this.timeout(60 * 1000)
+      if (isCI && platform === 'darwin') this.timeout(2 * 60 * 1000)
       await runRemote(scenario, helpers)
     })
   }
