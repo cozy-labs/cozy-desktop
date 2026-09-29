@@ -14,6 +14,7 @@ const path = require('path')
 
 const { BrowserWindow } = require('electron')
 const should = require('should')
+const uuid = require('uuid').v4
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -33,7 +34,8 @@ const EXPECTED = {
   '10': '256', // IncompatibleDoc — nameMaxBytes (doc)
   '11': '243', // IncompatibleDoc — dirNameMaxBytes (parent)
   '12': '4095', // IncompatibleDoc — pathMaxBytes
-  '13': 'contient des caractères interdits ou est trop long' // IncompatibleDoc — fallback
+  '13': 'contient des caractères interdits ou est trop long', // IncompatibleDoc — fallback
+  '14': 'dossier' // IncompatibleDoc — dirNameMaxBytes on a folder doc: the label comes from localDocTypeLabel
 }
 
 describe('User alerts dev page', function() {
@@ -85,6 +87,84 @@ describe('User alerts dev page', function() {
         )
       }
     }
+  })
+
+  // Regression: while a doc is blocked with an alert, renaming it updates the
+  // single displayed alert, and resolving removes it — no orphan alert.
+  it('keeps a single alert per doc and clears it on resolution', async function() {
+    // A real pouch _id is a dashed UUID, stable across renames
+    const docId = uuid()
+    const sendState = async userAlerts =>
+      win.webContents.executeJavaScript(
+        `app.ports.syncState.send(${JSON.stringify({
+          status: userAlerts.length ? 'user-alert' : 'uptodate',
+          remaining: 0,
+          errors: [],
+          userAlerts
+        })}); app.ports.showAlertsPanel.send(true)`
+      )
+    const alert = (path, chars, seq) => ({
+      seq,
+      status: 'Required',
+      code: 'IncompatibleDoc',
+      side: 'local',
+      doc: { id: docId, docType: 'file', path },
+      issue: {
+        issueType: 'reservedChars',
+        name: path,
+        path,
+        platform: 'win32',
+        docType: 'file',
+        chars,
+        reservedName: null,
+        forbiddenLastChar: null,
+        maxBytes: null,
+        sizeBytes: null
+      },
+      links: null,
+      prereqPath: null,
+      lastSeenAt: Date.now()
+    })
+    const alertCount = () =>
+      win.webContents.executeJavaScript(
+        'document.querySelectorAll(".alert-line").length'
+      )
+    const pollCount = async expected => {
+      let count = -1
+      for (let tries = 0; tries < 20; tries++) {
+        count = await alertCount()
+        if (count === expected) return count
+        await sleep(300)
+      }
+      throw new Error(`expected ${expected} alert-line, got ${count}`)
+    }
+    const pollText = async expected => {
+      let content = ''
+      for (let tries = 0; tries < 20; tries++) {
+        content = await win.webContents.executeJavaScript(
+          '(document.querySelector(".alert-line") || {}).innerText || ""'
+        )
+        if (content.includes(expected)) return content
+        await sleep(300)
+      }
+      throw new Error(`expected: ${expected}\ngot: ${content}`)
+    }
+
+    // 1. Incompatible name displayed
+    await sendState([alert('report?.docx', ['?'], 101)])
+    should(await pollCount(1)).equal(1)
+    await pollText('report?.docx')
+    await pollText('« ? »')
+
+    // 2. Renamed while still incompatible: the alert follows the new name
+    await sendState([alert('report:.docx', [':'], 102)])
+    should(await pollCount(1)).equal(1)
+    await pollText('report:.docx')
+    await pollText('« : »')
+
+    // 3. Renamed to a compatible name: the alert is gone entirely
+    await sendState([])
+    should(await pollCount(0)).equal(0)
   })
 
   it('does not log any renderer error', function() {

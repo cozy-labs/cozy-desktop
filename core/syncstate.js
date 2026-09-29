@@ -118,38 +118,17 @@ const addAlert = (
   alerts /*: UserAlert[] */,
   newAlert /*: UserAlert */
 ) /*: UserAlert[] */ => {
+  // One alert per document: a new error on the same doc replaces the
+  // previous one, whatever its code (mirrors _blockedCauses keyed by docId).
   const existingAlert = alerts.find(alert => {
-    if (alert.code !== newAlert.code) return false
-    if (alert.doc && newAlert.doc) return alert.doc.path === newAlert.doc.path
-    return alert.seq === newAlert.seq
+    if (alert.doc && newAlert.doc) return alert.doc.id === newAlert.doc.id
+    return alert.code === newAlert.code && alert.seq === newAlert.seq
   })
   if (existingAlert) {
-    existingAlert.status = newAlert.status
-    existingAlert.seq = newAlert.seq
-    existingAlert.lastSeenAt = newAlert.lastSeenAt
-    return alerts
+    return alerts.map(alert => (alert === existingAlert ? newAlert : alert))
   } else {
     return alerts.concat(newAlert)
   }
-}
-
-const updateAlert = (
-  alerts /*: UserAlert[] */,
-  alert /*: UserAlert */,
-  status /*: UserActionStatus */
-) /*: UserAlert[] */ => {
-  return alerts.reduce((prev /*: UserAlert[] */, curr /*: UserAlert */) => {
-    const match =
-      curr.code === alert.code &&
-      (curr.doc && alert.doc
-        ? curr.doc.path === alert.doc.path
-        : curr.seq === alert.seq)
-    if (match) {
-      return prev.concat({ ...alert, status })
-    } else {
-      return prev.concat(curr)
-    }
-  }, [])
 }
 
 const removeAlert = (
@@ -157,9 +136,8 @@ const removeAlert = (
   alert /*: UserAlert */
 ) /*: UserAlert[] */ => {
   return alerts.filter(a => {
-    if (a.code !== alert.code) return true
-    if (a.doc && alert.doc) return a.doc.path !== alert.doc.path
-    return a.seq !== alert.seq
+    if (a.doc && alert.doc) return a.doc.id !== alert.doc.id
+    return a.code !== alert.code || a.seq !== alert.seq
   })
 }
 
@@ -346,7 +324,6 @@ module.exports = {
   SyncState,
   makeAlert,
   addAlert,
-  updateAlert,
   removeAlert,
   makeError,
   addError

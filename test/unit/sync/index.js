@@ -948,6 +948,38 @@ describe('Sync', function() {
       should(actual.errors).equal(2)
       should(actual._rev).not.equal(doc._rev)
     })
+
+    it('does not record the error when the doc has a newer revision', async function() {
+      const doc = await builders
+        .metadata()
+        .path('third/failure')
+        .sides({ local: 2 })
+        .errors(2)
+        .create()
+
+      // A watcher merges a new revision after the error was registered
+      await builders
+        .metadata(doc)
+        .noErrors()
+        .changedSide('local')
+        .create()
+
+      const byIdMaybe = sinon.spy(this.pouch, 'byIdMaybe')
+      try {
+        await this.sync.updateErrors(
+          { doc },
+          remoteSyncError('simulated error', doc)
+        )
+
+        should(byIdMaybe).not.have.been.called()
+
+        const actual = await this.pouch.bySyncedPath(doc.path)
+        should(actual.errors).be.undefined()
+        should(actual._rev).not.equal(doc._rev)
+      } finally {
+        byIdMaybe.restore()
+      }
+    })
   })
 
   for (const syncSide of ['local', 'remote']) {

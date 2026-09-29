@@ -371,13 +371,6 @@ viewSyncError helpers platform now alert info =
         dirPath =
             Path.parent path
 
-        icon =
-            if info.docType == "directory" then
-                "folder"
-
-            else
-                info.docType
-
         medium =
             case info.side of
                 -- Open on the side opposite of the one on which the change is
@@ -394,7 +387,7 @@ viewSyncError helpers platform now alert info =
     div
         [ class "alert-line" ]
         [ span [ class "file-alert-icon" ]
-            [ div [ class ("file-type file-type-" ++ icon) ] []
+            [ div [ class ("file-type file-type-" ++ info.docType) ] []
             , span [ class "badge" ] [ text "!" ]
             ]
         , span
@@ -696,7 +689,7 @@ viewByCode helpers alert =
 
 localDocTypeLabel : String -> String
 localDocTypeLabel docType =
-    if docType == "directory" then
+    if docType == "folder" then
         "Helpers folder"
 
     else
