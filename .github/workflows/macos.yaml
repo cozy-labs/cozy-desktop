@@ -112,12 +112,7 @@ jobs:
       - name: Setup cozy-stack
         run: docker compose up -d
       - name: Setup test config
-        run: |
-          until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
-          do
-            echo "Waiting for cozy-stack to be running..."
-            sleep 30
-          done
+        run: ./test/wait-for-stack.sh
       - name: Unit tests
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -194,12 +189,7 @@ jobs:
       - name: Setup cozy-stack
         run: docker compose up -d
       - name: Setup test config
-        run: |
-          until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
-          do
-            echo "Waiting for cozy-stack to be running..."
-            sleep 30
-          done
+        run: ./test/wait-for-stack.sh
       - name: Integration tests
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -283,12 +273,7 @@ jobs:
       - name: Setup cozy-stack
         run: docker compose up -d
       - name: Setup test config
-        run: |
-          until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
-          do
-            echo "Waiting for cozy-stack to be running..."
-            sleep 30
-          done
+        run: ./test/wait-for-stack.sh
       - name: Scenarios
         env:
           STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
