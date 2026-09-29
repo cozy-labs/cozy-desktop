@@ -91,18 +91,5 @@ runs:
           cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >cozy-stack.log 2>&1 &
         fi
 
-        echo "Creating instance..."
-        until cozy-stack instances add --passphrase "$COZY_PASSPHRASE" "$COZY_DOMAIN"
-        do
-          echo "Waiting for cozy-stack to be running..."
-          sleep 1
-        done
-
-        echo "Creating OAuth client for tests..."
-        COZY_CLIENT_ID=$(cozy-stack instances client-oauth "$COZY_DOMAIN" http://localhost/ test github.com/cozy-labs/cozy-desktop)
-        echo "COZY_CLIENT_ID=$COZY_CLIENT_ID" >> $GITHUB_ENV
-
-        echo "Getting OAuth token for tests..."
-        COZY_STACK_TOKEN=$(cozy-stack instances token-oauth "$COZY_DOMAIN" "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
-        echo "COZY_STACK_TOKEN=$COZY_STACK_TOKEN" >> $GITHUB_ENV
+        "$GITHUB_WORKSPACE/test/wait-for-stack.sh"
 

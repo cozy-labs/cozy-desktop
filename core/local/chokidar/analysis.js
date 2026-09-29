@@ -241,6 +241,7 @@ function analyseEvent(
       if (moveChange && !moveChange.wip) delete e.old
       return (
         localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
+        localChange.fileMoveFromFileUpdateDeletion(sameInodeChange, e) ||
         localChange.fileDeletion(e) ||
         previousChanges.whenFoundByPath(
           e.path,

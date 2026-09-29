@@ -108,7 +108,7 @@ class LocalWatcher {
     autoBind(this)
 
     // TODO: Read from config
-    const timeoutInMs = process.env.NODE_ENV === 'test' ? 2000 : 10000
+    const timeoutInMs = process.env.NODE_ENV === 'test' ? 500 : 10000
     this.buffer = new LocalEventBuffer(timeoutInMs, async rawEvents => {
       try {
         await this.onFlush(rawEvents)
