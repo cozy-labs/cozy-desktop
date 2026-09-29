@@ -348,6 +348,17 @@ module.exports.init = async (
   const { builders } = helpers.remote
   const remoteDocsToTrash = []
   const inoMap = new Map()
+  // Remote parents are shared by most init docs: fetch each of them only once.
+  const remoteParents = new Map()
+  const getRemoteParent = async remoteParentPath => {
+    if (!remoteParents.has(remoteParentPath)) {
+      remoteParents.set(
+        remoteParentPath,
+        await helpers.remote.byPath(remoteParentPath)
+      )
+    }
+    return remoteParents.get(remoteParentPath)
+  }
 
   if (scenario.init) {
     for (const {
@@ -383,7 +394,7 @@ module.exports.init = async (
 
       const remoteParentPath = path.posix.join('/', path.posix.dirname(relpath))
       debug(`- retrieve remote parent: ${remoteParentPath}`)
-      const remoteParent = await helpers.remote.byPath(remoteParentPath)
+      const remoteParent = await getRemoteParent(remoteParentPath)
       if (!remoteParent) {
         debug(`Could not retrieve remote parent: ${remoteParentPath}`)
         return
@@ -401,6 +412,7 @@ module.exports.init = async (
           .name(remoteName)
           .inDir(remoteParent)
           .create()
+        remoteParents.set(remoteDir.path, remoteDir)
 
         if (trashed) {
           remoteDocsToTrash.push(remoteDir)
