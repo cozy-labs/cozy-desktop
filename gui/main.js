@@ -100,7 +100,7 @@ const notificationsState = {
   currentUserAlertKeys: new Set()
 }
 
-const alertKey = a => (a.doc ? `${a.code}::${a.doc.path}` : a.code)
+const alertKey = a => (a.doc ? `${a.code}::${a.doc.id}` : a.code)
 
 const setupDesktop = async () => {
   try {

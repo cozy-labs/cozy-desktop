@@ -3,7 +3,7 @@
 
 const should = require('should')
 
-const { makeAlert } = require('../../core/syncstate')
+const { SyncState, makeAlert } = require('../../core/syncstate')
 
 describe('makeAlert', () => {
   const makeErr = doc => ({
@@ -131,5 +131,90 @@ describe('makeAlert', () => {
     const alert = makeAlert({ seq: 1, code: 'MissingPermissions' })
 
     should(alert.issue).be.null()
+  })
+})
+
+describe('userAlerts registry', () => {
+  const buildSyncState = () => new SyncState()
+
+  const alertErr = (code, doc, seq) => ({ seq, code, doc })
+  const alertDoc = (path, id = 'doc-id') => ({
+    _id: id,
+    docType: 'file',
+    path
+  })
+
+  it('keeps a single alert when the doc is renamed while errored', () => {
+    const syncState = buildSyncState()
+
+    syncState.emit(
+      'user-alert',
+      alertErr('IncompatibleDoc', alertDoc('a.docx')),
+      12,
+      'local'
+    )
+    syncState.emit(
+      'user-alert',
+      alertErr('IncompatibleDoc', alertDoc('b.docx')),
+      13,
+      'local'
+    )
+
+    should(syncState.state.userAlerts.length).equal(1)
+    const [alert] = syncState.state.userAlerts
+    should(alert.doc && alert.doc.path).equal('b.docx')
+  })
+
+  it('removes the alert by doc id even if the path changed', () => {
+    const syncState = buildSyncState()
+
+    syncState.emit(
+      'user-alert',
+      alertErr('IncompatibleDoc', alertDoc('a.docx')),
+      12,
+      'local'
+    )
+    syncState.emit(
+      'user-action-done',
+      alertErr('IncompatibleDoc', alertDoc('b.docx')),
+      13
+    )
+
+    should(syncState.state.userAlerts).be.empty()
+  })
+
+  it('replaces the alert when a new error arrives on the same doc', () => {
+    const syncState = buildSyncState()
+
+    syncState.emit(
+      'user-alert',
+      alertErr('IncompatibleDoc', alertDoc('a.docx')),
+      12,
+      'local'
+    )
+    syncState.emit(
+      'user-alert',
+      alertErr('MissingPermissions', alertDoc('b.docx')),
+      13,
+      'local'
+    )
+
+    should(syncState.state.userAlerts.length).equal(1)
+    should(syncState.state.userAlerts[0].code).equal('MissingPermissions')
+    const [alert] = syncState.state.userAlerts
+    should(alert.doc && alert.doc.path).equal('b.docx')
+  })
+
+  it('matches alerts without doc by seq', () => {
+    const syncState = buildSyncState()
+
+    syncState.emit('user-alert', alertErr('UnreachableCozy'), 5, null)
+    syncState.emit('user-alert', alertErr('UnreachableCozy'), 5, null)
+
+    should(syncState.state.userAlerts.length).equal(1)
+
+    syncState.emit('user-action-done', alertErr('UnreachableCozy'), 5)
+
+    should(syncState.state.userAlerts).be.empty()
   })
 })
