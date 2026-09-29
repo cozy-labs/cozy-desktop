@@ -1,0 +1,38 @@
+name: Warm Lima cache
+
+# The scenario/unit/integration macOS jobs boot Docker through Colima/Lima and
+# rely on the Lima cache populated here. Keeping it warm avoids the ~6 min VM
+# image download on PR runs after the cache TTL (7 days) expired.
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: warm-lima-cache
+  cancel-in-progress: false
+
+jobs:
+  warm:
+    runs-on: macos-26-intel
+    steps:
+      - uses: actions/checkout@v7
+      - name: Restore Lima cache
+        id: cache-lima
+        uses: actions/cache/restore@v6
+        env:
+          cache-name: cache-lima
+        with:
+          path: ~/Library/Caches/lima
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
+      - name: Setup Docker
+        uses: ./.github/actions/setup-docker
+      - name: Save Lima cache
+        if: ${{ steps.cache-lima.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        env:
+          cache-name: cache-lima
+        with:
+          path: ~/Library/Caches/lima
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
