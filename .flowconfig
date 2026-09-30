@@ -10,6 +10,7 @@
 <PROJECT_ROOT>/node_modules/resolve/.*
 <PROJECT_ROOT>/node_modules/yargs/.*
 <PROJECT_ROOT>/test/elm/.*
+<PROJECT_ROOT>/trees/.*
 
 [include]
 
