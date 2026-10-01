@@ -72,16 +72,16 @@ view helpers context =
         [ div
             [ class "step-content" ]
             [ Icons.bigTick
-            , h1 []
+            , h1 [ class "wizard__title" ]
                 [ text <|
                     helpers.t "Folder You're all set!"
                 ]
-            , p [ class "u-mb-0" ]
+            , p [ class "wizard__helper" ]
                 [ text <|
                     helpers.t "Folder You can now synchronize your Twake Workplace with this computer."
                 ]
-            , div [ class "u-mt-1" ]
-                [ ul [ class "u-mb-0 u-pl-1" ]
+            , div [ class "wizard__details" ]
+                [ ul []
                     [ viewIf partialSyncEnabled <|
                         li []
                             [ span [ class "folder__config-option__title" ]
@@ -90,14 +90,14 @@ view helpers context =
                             , text <| helpers.t "Folder By default all the documents on your Twake Workplace will be synchronized."
                             , selectiveSyncLink helpers context
                             ]
-                    , li [ class "u-mt-1" ]
+                    , li []
                         [ span [ class "folder__config-option__title" ]
                             [ text <| helpers.t "Folder Location on the computer" ]
                         , text " - "
                         , text <| helpers.t "Folder The documents selected on your Twake Workplace will be synchronized on this computer in "
                         , span [ class "folder__path" ] [ text context.folderConfig.folder ]
                         , text "."
-                        , a [ class "u-ml-half u-primaryColor", href "#", onClick ChooseFolder ]
+                        , a [ class "wizard__inline-link", href "#", onClick ChooseFolder ]
                             [ text <|
                                 helpers.t "Folder Modify"
                             ]
@@ -107,7 +107,7 @@ view helpers context =
                     text ""
 
                   else
-                    p [ class "u-error u-mb-0 u-lh-tiny" ]
+                    p [ class "u-error" ]
                         [ text <|
                             helpers.interpolate [ context.folderConfig.folder ]
                                 "Folder You cannot synchronize your data directly in "
@@ -118,13 +118,9 @@ view helpers context =
                         , text <|
                             helpers.t "Folder Please choose another location"
                         ]
-
-                -- TODO: Link to the relevant FAQ section?
-                -- TODO: Include button to reset to default?
-                -- TODO: Show different error messages?
                 ]
             , a
-                [ class "c-btn c-btn--full u-mt-2"
+                [ class "c-btn c-btn--full"
                 , href "#"
                 , if isValid context.folderConfig then
                     onClick StartSync
@@ -154,7 +150,7 @@ selectiveSyncLink helpers context =
                 Nothing ->
                     ""
     in
-    a [ class "u-ml-half u-primaryColor", href configurationUrl ]
+    a [ class "wizard__inline-link", href configurationUrl ]
         [ text <|
             helpers.t "Folder Modify"
         ]

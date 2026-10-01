@@ -10,13 +10,12 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import I18n exposing (Helpers)
-import Icons
 import Ports
 import String exposing (contains)
 import Util.Keyboard as Keyboard
 import View.BackButton as BackButton
+import View.Logo as Logo
 import Window.Onboarding.Context as Context exposing (Context)
-import Window.Onboarding.Welcome as Welcome
 
 
 
@@ -106,53 +105,45 @@ view helpers context =
             ]
         ]
         [ div
+            [ class "wizard__back" ]
+            [ BackButton.view helpers GoToWelcome
+            ]
+        , div
             [ class "step-content" ]
-            [ div
-                [ class "u-pos-absolute u-top-xs u-left-xs" ]
-                [ BackButton.view helpers GoToWelcome
-                ]
+            [ Logo.view False
+            , h1 [ class "wizard__title" ] [ text (helpers.t "Email Sign in") ]
             , if isValid then
-                Icons.badge Icons.twakeDrive
-
-              else
-                Icons.bigCross
-            , h1 [] [ text (helpers.t "Email Sign in") ]
-            , if isValid then
-                p [ class "adress-helper" ]
+                p [ class "wizard__helper" ]
                     [ text (helpers.t "Email To sign in and access your Twake Workplace, please enter your organization email address.") ]
 
               else
-                p [ class "error-message" ]
+                p [ class "wizard__helper wizard__helper--error" ]
                     [ text (helpers.t error) ]
-            , div [ class "coz-form-group" ]
-                [ label [ class "coz-form-label" ]
+            , div [ class "wizard__field" ]
+                [ label [ class "wizard__field-label" ]
                     [ text (helpers.t "Email") ]
-                , div [ class "input-wrapper" ]
-                    [ input
-                        [ placeholder "Enter your organization email"
-                        , classList
-                            [ ( "wizard__address", True )
-                            , ( "error", not isValid )
-                            ]
-                        , type_ "text"
-                        , value context.emailConfig.address
-                        , disabled context.emailConfig.busy
-                        , onInput FillAddress
-                        , Keyboard.onEnter RegisterWithEmail
+                , input
+                    [ placeholder "Enter your organization email"
+                    , classList
+                        [ ( "wizard__address", True )
+                        , ( "error", not isValid )
                         ]
-                        []
+                    , type_ "text"
+                    , value context.emailConfig.address
+                    , disabled context.emailConfig.busy
+                    , onInput FillAddress
+                    , Keyboard.onEnter RegisterWithEmail
                     ]
+                    []
                 ]
-            , div [ class "cozy-form-tip" ]
-                [ text (helpers.t "Email Example") ]
             , a
-                [ class "more-info"
+                [ class "wizard__link"
                 , href "#"
                 , onClick LoginWithAddress
                 ]
-                [ span [] [ text (helpers.t "Email Enter my Twake URL") ] ]
+                [ text (helpers.t "Email Enter my Twake URL") ]
             , a
-                [ class "c-btn c-btn--full u-mt-1"
+                [ class "c-btn c-btn--full"
                 , href "#"
                 , if context.emailConfig.address == "" then
                     attribute "disabled" "true"

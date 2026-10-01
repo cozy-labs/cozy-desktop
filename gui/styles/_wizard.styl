@@ -3,12 +3,16 @@
 
 @require '_spin'
 @require '_twake_palette'
+@import './node_modules/@linagora/twake-css/dist/vars.css'
 
 .wizard
   overflow hidden
   width 100vw
   height 100vh
   position relative
+  font-family 'Inter', 'Lato', sans-serif
+  color var(--twake-palette-text-primary)
+  background-color var(--twake-palette-common-white)
 
 .on-step-email
   .step
@@ -30,109 +34,10 @@
   position absolute
   left 0
   top 0
-  display flex
-  justify-content space-between
-  align-items center
   width 100vw
   height 100vh
-  transition transform .2s ease-out, background-color .1s
+  transition transform .2s ease-out
   will-change transform
-
-  h1
-    color var(--charcoalGrey)
-    font-size: 1.5rem
-
-a.more-info
-  display: inline-block
-  color var(--dodgerBlue)
-  margin-top rem(13px, 14px)
-  margin-left .25em
-  text-decoration: none
-
-
-.step-content
-  flex 0 1 40em
-  max-width: 35em
-  margin auto
-  padding 3em 1em
-
-.btn
-  @extend $button
-  @extend $button--regular
-  width: 100%
-  font-size: 1.1em
-  margin 1em 0 0 0
-
-  &[aria-busy=true] > span
-    // We want a busy spinner vertically aligned with the text, not centered
-    align-items unset
-
-    &::after
-      content ''
-      position relative
-      left .5rem
-
-      @extend $icon-16
-      @extend $spin
-      background-color: var(--primaryContrastTextColor)
-
-.step
-  .c-btn + .c-btn
-    margin-top rem(13px, 14px)
-
-.step .coz-form-group
-  @extend $form .coz-form-group
-  @extend $form-text
-  margin-bottom: 1em
-.step label
-  @extend $form .coz-form-label
-  font-size: 1em
-.step .input-wrapper
-  display: flex
-  flex-direction: row
-  span
-    flex 0 0
-    padding: 0.9em 0.3em
-    font-size: 1.1em
-    color var(--black)
-  input
-    flex 1 0
-.step .cozy-form-tip
-  font-style: italic
-  color var(--slateGrey)
-
-
-.folder__config-option__title
-  font-weight bold
-
-.folder__path
-  $iconSpace = 1.1rem
-
-  font-weight bold
-  font-style italic
-
-  padding-left $iconSpace
-
-  &:before
-    @extend $icon
-    display: inline-block
-    vertical-align: middle
-    -webkit-mask-image: embedurl('./node_modules/cozy-ui/assets/icons/ui/folder.svg')
-    -webkit-mask-position: center
-    -webkit-mask-size: cover
-    mask-image: embedurl('./node_modules/cozy-ui/assets/icons/ui/folder.svg')
-    mask-position: center
-    mask-size: cover
-
-    position absolute
-    width 1rem
-    height 1rem
-    margin-left - $iconSpace
-    content ''
-    background-color var(--slateGrey)
-
-    /.u-error &
-      background-color var(--errorColor)
 
 .step-email
   left 100vw
@@ -145,26 +50,316 @@ a.more-info
 
 .step-folder
   left 400vw
+
+.wizard__back
+  position absolute
+  top 15px
+  left 16px
+  z-index 1
+
+.step-content
+  display flex
+  flex-direction column
+  align-items center
+  box-sizing border-box
+  width 504px
+  height 100%
+  margin 0 auto
+  padding 36px 60px 40px
+
+.wizard__title
+  margin 43px 0 0
+  font-size 22px
+  line-height 28px
+  font-weight 600
+  text-align center
+  color var(--twake-palette-text-primary)
+
+.wizard__helper
+  margin 25px 0 0
+  font-size 16px
+  line-height 24px
+  text-align center
+  color var(--twake-palette-text-secondary)
+
+.wizard__helper--error
+  color var(--twake-palette-error-main)
+
+.wizard__helper + .wizard__helper
+  margin-top 8px
+
+.wizard__field
+  position relative
+  width 100%
+  margin-top 34px
+
+.wizard__field-label
+  position absolute
+  top -8px
+  left 12px
+  z-index 1
+  padding 0 4px
+  background var(--twake-palette-common-white)
+  font-size 12px
+  line-height 16px
+  font-weight 500
+  letter-spacing 0.5px
+  color var(--twake-palette-grey-A900)
+
+.wizard__field input
+  box-sizing border-box
+  width 100%
+  height 54px
+  padding 0 16px
+  border 1px solid var(--twake-palette-border-main)
+  border-radius 4px
+  background transparent
+  font-size 17px
+  font-weight 500
+  letter-spacing -0.15px
+  color var(--twake-palette-text-primary)
+  outline none
+  transition border-color 150ms
+
+  @media (hover: hover)
+    &:hover:not(:focus)
+      border-color var(--twake-palette-text-disabled)
+
+  &::placeholder
+    color var(--twake-palette-text-disabled)
+
+  &:focus
+    border-color var(--twake-palette-primary-main)
+
+  &.error
+    border-color var(--twake-palette-error-main)
+
+.wizard__link
+  display block
+  margin-top 16px
+  color var(--twake-palette-primary-main)
+  font-size 14px
+  line-height 20px
+  font-weight 500
+  letter-spacing -0.35px
+  text-align center
+  text-decoration none
+
+  &:hover
+    text-decoration underline
+
+.step-oauth .wizard__link
+  margin-top 32px
+
+.wizard__inline-link
+  margin-left 4px
+  color var(--twake-palette-primary-main)
+  text-decoration none
+
+  &:hover
+    text-decoration underline
+
+.wizard .c-btn
+  display flex
+  align-items center
+  justify-content center
+  height 48px
+  padding 13px 32px
+  border 1px solid var(--twake-palette-primary-main)
+  border-radius 100px
+  background-color var(--twake-palette-primary-main)
+  color var(--twake-palette-primary-contrastText)
+  font-size 14px
+  line-height 20px
+  font-weight 500
+  text-decoration none
+  cursor pointer
+  transition background-color 150ms, border-color 150ms
+
+  @media (hover: hover)
+    &:hover
+      background-color var(--twake-palette-primary-dark)
+
+  &[disabled]
+    pointer-events none
+    border-color var(--twake-palette-action-disabledBackground)
+    background-color var(--twake-palette-action-disabledBackground)
+    color var(--twake-palette-action-disabled)
+
+.wizard .c-btn--secondary
+  border-color unquote("color-mix(in srgb, var(--twake-palette-primary-main) 50%, transparent)")
+  background-color transparent
+  color var(--twake-palette-primary-main)
+  line-height 18px
+
+  @media (hover: hover)
+    &:hover
+      background-color unquote("color-mix(in srgb, var(--twake-palette-primary-main) 4%, transparent)")
+      border-color var(--twake-palette-primary-main)
+
+  &[disabled]
+    background-color transparent
+
+.wizard .c-btn--full
+  width 100%
+
+.wizard .c-btn[aria-busy=true] > span
+  // We want a busy spinner vertically aligned with the text, not centered
+  align-items unset
+
+  &::after
+    content ''
+    position relative
+    left .5rem
+
+    @extend $icon-16
+    @extend $spin
+    background-color var(--twake-palette-primary-contrastText)
+
+.step-content .c-btn--full
+  margin-top 33px
+
+// Welcome
+
+.step-welcome
+  display flex
+  flex-direction column
+  align-items center
+  // XXX: decorative Figma gradient — no twake-css variables or class for it
+  background radial-gradient(103.89% 81.75% at 95.41% 106.34%, #eaf8ef 6%, rgba(234, 248, 239, 0) 79.68%), radial-gradient(323.89% 221.63% at -21.39% 8.81%, #faf1f1 0%, #fff0f0 15.29%, #fbf3fe 25%, #e5f0fa 40.79%)
+
+.wizard__main
+  display flex
+  flex-direction column
+  align-items center
+  padding-top 75px
+
+.wizard__tagline
+  max-width 256px
+  margin 8px 0 0
+  font-size 16px
+  line-height 26px
+  font-weight 500
+  text-align center
+  color var(--twake-palette-common-black)
+
+.wizard__buttons
+  display flex
+  align-items center
+  gap 20px
+  margin-top 42px
+
+.wizard__footer
+  position absolute
+  left 0
+  right 0
+  bottom 0
+  display flex
+  flex-direction column
+  align-items center
+  box-sizing: border-box
+  padding-top 25px
+  gap 13px
+  height 121px
+  background var(--twake-palette-common-white)
+
+.wizard__signup
+  color var(--twake-palette-primary-main)
+  font-size 14px
+  line-height 18px
+  font-weight 500
+  letter-spacing -0.35px
+  text-decoration none
+
+  &:hover
+    text-decoration underline
+
+.wizard__disclaimer
+  max-width 279px
+  margin 0
+  font-size 11px
+  line-height 16px
+  font-weight 500
+  text-align center
+  color var(--twake-palette-text-secondary)
+
+  a
+    color var(--twake-palette-primary-main)
+    text-decoration none
+
+    &:hover
+      text-decoration underline
+
+// Folder
+
+.step-folder figure
+  margin 0
+
+.step-folder .svg-wrapper
+  display flex
+  align-items center
+  justify-content center
+  box-sizing border-box
+  width 64px
+  height 64px
+  margin 0
+  padding 0
+  max-width none
+  border-radius 50%
+  box-shadow none
+  background-color var(--twake-palette-success-main)
+
+  svg
+    width 36px
+    height 36px
+
+.step-folder .wizard__title
+  margin-top 24px
+
+.folder__config-option__title
+  font-weight 600
+
+.step-folder .wizard__details
+  width 100%
+  margin-top 24px
+  font-size 14px
+  line-height 20px
   text-align left
 
-  .svg-wrapper
-    background-color: var(--emerald)
-    margin-bottom 0
+  ul
+    margin 0
+    padding-left 20px
 
-  h1
-    text-align center
-    margin-top 2rem
+  li + li
+    margin-top 12px
 
-  &.step-error
-    .folder-helper
-      color var(--black)
-    .error-message
-      margin .5em 0
+.step-folder .u-error
+  margin-top 12px
+  color var(--twake-palette-error-main)
 
-.step-error
-  color var(--pomegranate)
-  .svg-wrapper
-    background-color var(--pomegranate)
-  .btn
-    opacity  .5
-    cursor   not-allowed
+.folder__path
+  $iconSpace = 1.1rem
+
+  font-weight bold
+  font-style italic
+  padding-left $iconSpace
+
+  &:before
+    @extend $icon
+    display inline-block
+    vertical-align middle
+    -webkit-mask-image embedurl('./node_modules/cozy-ui/assets/icons/ui/folder.svg')
+    -webkit-mask-position center
+    -webkit-mask-size cover
+    mask-image embedurl('./node_modules/cozy-ui/assets/icons/ui/folder.svg')
+    mask-position center
+    mask-size cover
+    position absolute
+    width 1rem
+    height 1rem
+    margin-left - $iconSpace
+    content ''
+    background-color var(--twake-palette-text-secondary)
+
+.step-folder .c-btn--full
+  margin-top auto

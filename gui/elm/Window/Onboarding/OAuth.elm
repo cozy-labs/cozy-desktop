@@ -13,11 +13,11 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import I18n exposing (Helpers)
-import Icons
 import Ports
 import Process
 import Task
 import Time
+import View.Logo as Logo
 import Window.Onboarding.Context as Context exposing (Context)
 
 
@@ -122,55 +122,6 @@ view helpers context =
 
         informing =
             isValid && not context.oauthConfig.browserOpened
-
-        content =
-            if informing then
-                [ Icons.badge Icons.twakeDrive
-                , h1 [] [ text (helpers.t "OAuth Login in your browser") ]
-                , p []
-                    [ text (helpers.t "OAuth Your login page will open in your default browser in a few seconds.") ]
-                , a
-                    [ class "c-btn c-btn--full u-mt-1"
-                    , href "#"
-                    , onClick OpenBrowser
-                    ]
-                    [ span [] [ text (helpers.t "OAuth Open my browser now") ] ]
-                ]
-
-            else
-                [ if isValid then
-                    Icons.badge Icons.twakeDrive
-
-                  else
-                    Icons.bigCross
-                , h1 [] [ text (helpers.t "OAuth Waiting for login") ]
-                , if isValid then
-                    p []
-                        [ text (helpers.t "OAuth Please check your default browser and log in your Twake account.")
-                        , text (helpers.t "OAuth You'll be redirected here once it's done.")
-                        ]
-
-                  else
-                    p [ class "error-message" ]
-                        [ text (helpers.t error) ]
-                , p []
-                    [ text (helpers.t "OAuth If something went wrong, you can retry the login by clicking on the button below.") ]
-                , a
-                    [ class "c-btn c-btn--full u-mt-1"
-                    , href "#"
-                    , if context.oauthConfig.busy then
-                        attribute "aria-busy" "true"
-
-                      else
-                        onClick StartOAuth
-                    ]
-                    [ span [] [ text (helpers.t "OAuth Retry") ] ]
-                , a
-                    [ class "more-info"
-                    , href "mailto:support@twake.app"
-                    ]
-                    [ text (helpers.t "OAuth Contact support") ]
-                ]
     in
     div
         [ classList
@@ -181,5 +132,51 @@ view helpers context =
         ]
         [ div
             [ class "step-content" ]
-            content
+            [ Logo.view False
+            , if informing then
+                div []
+                    [ h1 [ class "wizard__title" ]
+                        [ text (helpers.t "OAuth Login in your browser") ]
+                    , p [ class "wizard__helper" ]
+                        [ text (helpers.t "OAuth Your login page will open in your default browser in a few seconds.") ]
+                    , a
+                        [ class "c-btn c-btn--full"
+                        , href "#"
+                        , onClick OpenBrowser
+                        ]
+                        [ span [] [ text (helpers.t "OAuth Open my browser now") ] ]
+                    ]
+
+              else
+                div []
+                    [ h1 [ class "wizard__title" ]
+                        [ text (helpers.t "OAuth Waiting for login") ]
+                    , if isValid then
+                        p [ class "wizard__helper" ]
+                            [ text (helpers.t "OAuth Please check your default browser and log in your Twake account.")
+                            , text (helpers.t "OAuth You'll be redirected here once it's done.")
+                            ]
+
+                      else
+                        p [ class "wizard__helper wizard__helper--error" ]
+                            [ text (helpers.t error) ]
+                    , p [ class "wizard__helper" ]
+                        [ text (helpers.t "OAuth If something went wrong, you can retry the login by clicking on the button below.") ]
+                    , a
+                        [ class "c-btn c-btn--full"
+                        , href "#"
+                        , if context.oauthConfig.busy then
+                            attribute "aria-busy" "true"
+
+                          else
+                            onClick StartOAuth
+                        ]
+                        [ span [] [ text (helpers.t "OAuth Retry") ] ]
+                    , a
+                        [ class "wizard__link"
+                        , href "mailto:support@twake.app"
+                        ]
+                        [ text (helpers.t "OAuth Contact support") ]
+                    ]
+            ]
         ]

@@ -11,15 +11,12 @@
   "Account Your files won't be deleted.": "Sus archivos no serán borrados.",
 
   "Address Sign in": "Iniciar sesión",
+  "Address Sign in with company account": "Iniciar sesión con una cuenta de empresa",
+  "Address URL": "URL",
   "Address To sign in and access your Twake Workplace, please enter its URL.": "Para iniciar sesión y acceder a su Twake Workplace, introduzca su URL.",
   "Address Invalid address": "Ups, la dirección no es correcta. Para conectarse a su Twake Workplace debe escribir su URL, algo así como https://lucie.twake.app",
   "Address No Twake Workplace at this address!": "¡No hay una Twake Workplace en esta dirección!",
   "Address No email address": "Usted escribió una dirección de correo electrónico. Para conectarse a su Twake Workplace debe escribir su URL, algo así como https://lucie.twake.app",
-  "Address Twake Workplace address": "Dirección Twake Workplace",
-  "Address Example Before": "Ejemplo: https://",
-  "Address Example Bold": "camilofernandez",
-  "Address Example After": ".twake.app",
-  "Address Enter my organization email": "Introducir el correo electrónico de mi organización",
   "Address Next": "Siguiente",
   "Address You haven't filled the address!": "¡Usted no ha llenado la dirección!",
 
@@ -340,5 +337,9 @@
   "Welcome Sign in": "Iniciar sesión",
   "Welcome Create account": "Crear una cuenta",
   "Welcome Sign in with company account": "Iniciar sesión con una cuenta de empresa",
-  "Welcome Your own private cloud": "¡Bienvenido a Twake Desktop!"
+  "Welcome By continuing, you agree to our": "Al continuar, acepta nuestras",
+  "Welcome Terms of use": "Condiciones de uso",
+  "Welcome and": "y",
+  "Welcome Privacy Policy": "Política de privacidad",
+  "Welcome Your own private cloud": "Plataforma fiable y de código abierto para colaborar"
 }
