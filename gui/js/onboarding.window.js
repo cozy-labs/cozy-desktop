@@ -22,8 +22,8 @@ import type { Event as ElectronEvent } from 'electron'
 import type { TwakeConfiguration } from '../../core/utils/twake'
 */
 
-const ONBOARDING_SCREEN_WIDTH = 768
-const ONBOARDING_SCREEN_HEIGHT = 680
+const ONBOARDING_SCREEN_WIDTH = 726
+const ONBOARDING_SCREEN_HEIGHT = 600
 const LOGIN_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
 const LOGIN_SCREEN_HEIGHT = 740
 
@@ -33,6 +33,7 @@ module.exports = class OnboardingWM extends WindowManager {
       title: 'ONBOARDING',
       show: false,
       center: true,
+      useContentSize: true,
       width: ONBOARDING_SCREEN_WIDTH,
       height: ONBOARDING_SCREEN_HEIGHT
     }
@@ -51,6 +52,13 @@ module.exports = class OnboardingWM extends WindowManager {
 
   hash() {
     return '#onboarding'
+  }
+
+  centerOnScreen(width /*: number */, height /*: number */) {
+    // The Figma frames give content dimensions: size the web content, not the
+    // window frame (the title bar would otherwise eat into the layout).
+    this.win.setContentSize(width, height)
+    this.win.center()
   }
 
   async jumpToSyncPath() {
