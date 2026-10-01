@@ -371,10 +371,15 @@ module.exports = class OnboardingWM extends WindowManager {
 
   checkSyncPath(syncPath /*: string */, eventSender /*: WindowManager */) {
     const result = this.desktop.checkSyncPath(syncPath)
-    eventSender.send('folder-chosen', {
-      folder: result.syncPath,
-      error: result.error ? `Folder ${result.error}` : null
-    })
+    // On a fresh config `syncPath` is undefined: nothing to announce to Elm
+    // yet, and the `folder` port expects a String (sending `undefined` would
+    // crash the port).
+    if (result.syncPath) {
+      eventSender.send('folder-chosen', {
+        folder: result.syncPath,
+        error: result.error ? `Folder ${result.error}` : null
+      })
+    }
     return result
   }
 
