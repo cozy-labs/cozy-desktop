@@ -15,3 +15,29 @@ figure .svg-wrapper
     padding: 1em
     box-shadow: 0 1px 3px rgba(50, 54, 63, .19), 0 4px 12px rgba(50, 54, 63, .12)
     margin-bottom: 3em
+
+.logo
+  display flex
+  align-items center
+
+.logo--large
+  flex-direction column
+  gap 14px
+
+.logo__wordmark
+  font-size 19px
+  line-height 23px
+  font-weight 700
+  letter-spacing -0.4px
+  color var(--twake-palette-common-black)
+  white-space nowrap
+
+  span:last-child
+    // XXX: no twake-css variable for this wordmark accent
+    color #97a3b7
+    font-weight 500
+    margin-left 6px
+
+.logo--large .logo__wordmark
+  font-size 25px
+  line-height 30px

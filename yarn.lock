@@ -1315,6 +1315,11 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
+"@linagora/twake-css@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@linagora/twake-css/-/twake-css-1.0.0.tgz#d1a23ab3853b6df88a6b9345463bc91428c365b8"
+  integrity sha512-bhGX6UX/3djdnzbvhSVrl8Lu7GkXGleXuuRHNUozFFpnLNyZUTkS51RkjLJ+g0fD3lrvfx61xcy1N4GG2v35ag==
+
 "@malept/cross-spawn-promise@^1.1.0":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@malept/cross-spawn-promise/-/cross-spawn-promise-1.1.1.tgz#504af200af6b98e198bce768bc1730c6936ae01d"
@@ -1778,11 +1783,11 @@
   dependencies:
     "@opentelemetry/core" "^1.1.0"
 
-"@parcel/watcher@https://github.com/taratatach/parcel-watcher.git#v3.1.0":
-  version "3.1.0"
-  resolved "https://github.com/taratatach/parcel-watcher.git#01fa6d8b6cd1cebd1f61155a6eac98c6d34c57e8"
+"@parcel/watcher@https://github.com/taratatach/parcel-watcher.git#v3.2.0":
+  version "3.2.0"
+  resolved "https://github.com/taratatach/parcel-watcher.git#24231853b1c999509766bd9b1b994d7803322131"
   dependencies:
-    node-addon-api "^3.2.1"
+    node-addon-api "^8.9.2"
     node-gyp-build "^4.8.1"
 
 "@pkgjs/parseargs@^0.11.0":
@@ -7744,10 +7749,10 @@ node-addon-api@^1.6.3:
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-1.7.2.tgz#3df30b95720b53c24e59948b49532b662444f54d"
   integrity sha512-ibPK3iA+vaY1eEjESkQkM0BbCqFOaZMiXRTtdB0u7b4djtY6JnsjvPdUHVMg6xQt3B8fpTTWHI9A+ADjM9frzg==
 
-node-addon-api@^3.2.1:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-3.2.1.tgz#81325e0a2117789c0128dab65e7e38f07ceba161"
-  integrity sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==
+node-addon-api@^8.9.2:
+  version "8.9.2"
+  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-8.9.2.tgz#db7ac94a13ffd9b55e6cb04584bd5ef8e1d74b18"
+  integrity sha512-VijLXbi3UACN69I0JVXJsX4tjACjNoQDgv2gTF6sx2wWEi8tkSg2eX8p5gSIFi8z2+DL3oHmY6OyKce38SDolg==
 
 node-ensure@^0.0.0:
   version "0.0.0"
