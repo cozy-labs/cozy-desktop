@@ -16,7 +16,7 @@
     "url": "git://github.com/cozy-labs/cozy-desktop.git"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=24"
   },
   "keywords": [
     "Electron",
@@ -32,7 +32,7 @@
     "bootstrap": "yarn dev:setup && yarn test:setup",
     "bootstrap:remote": "electron ./dev/remote/generate-test-env.js",
     "build": "yarn build:css && yarn build:elm && yarn build:tx",
-    "build:css": "stylus --sourcemap --compress --use cozy-ui/stylus gui/styles/app.styl --out gui",
+    "build:css": "stylus --sourcemap --compress --include-css --use cozy-ui/stylus gui/styles/app.styl --out gui",
     "build:elm": "elm make ./gui/elm/Main.elm --output ./gui/elm.js",
     "build:tx": "tx pull --all --minimum-perc=1 || true",
     "capture": "env-cmd -f .env.test electron ./dev/capture.js",
@@ -75,14 +75,14 @@
     "test:world": "yarn mocha test/world/",
     "watch": "yarn watch:core & cross-env WATCH=true yarn start & yarn watch:css & yarn watch:elm & yarn watch:js",
     "watch:core": "yarn build:core --watch",
-    "watch:css": "stylus --sourcemap  --use cozy-ui/stylus --watch gui/styles/app.styl --out gui",
+    "watch:css": "stylus --sourcemap --include-css --use cozy-ui/stylus --watch gui/styles/app.styl --out gui",
     "watch:elm": "chokidar 'gui/elm/**/*.elm' -c 'yarn build:elm'",
     "watch:js": "chokidar 'gui/js/**/*.js' gui/main.js gui/ports.js -c 'eslint {path}'"
   },
   "dependencies": {
     "@babel/runtime": "7.16.7",
     "@electron/remote": "2.1.2",
-    "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#v3.1.0",
+    "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#v4.0.0",
     "@sentry/electron": "^5.7.0",
     "@sentry/integrations": "^7.114.0",
     "agent-base": "7.1.0",
@@ -137,6 +137,7 @@
     "@babel/core": "7.16.7",
     "@babel/eslint-parser": "^7.25.9",
     "@electron/notarize": "^2.1.0",
+    "@linagora/twake-css": "1.0.0",
     "@sentry/cli": "^2.39.1",
     "babel-preset-cozy-app": "^2.0.1",
     "chai": "4.3.4",
@@ -188,7 +189,7 @@
     "treeify": "^1.1.0"
   },
   "optionalDependencies": {
-    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#2.0.0"
+    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#3.0.1"
   },
   "resolutions": {
     "node-abi": "3.5.0"

@@ -11,15 +11,12 @@
   "Account Your files won't be deleted.": "Your files won't be deleted.",
 
   "Address Sign in": "Sign in",
+  "Address Sign in with company account": "Sign in with company account",
+  "Address URL": "URL",
   "Address To sign in and access your Twake Workplace, please enter its URL.": "To sign in and access your Twake Workplace, please enter its URL.",
   "Address Invalid address": "Woops, the address is not correct. To sign in to your Twake Workplace you must type its URL, something like https://lucie.twake.app",
   "Address No Twake Workplace at this address!": "No Twake Workplace at this address!",
   "Address No email address": "You typed an email address. To sign in to your Twake Workplace you must type its URL, something like https://lucie.twake.app",
-  "Address Twake Workplace address": "Twake Workplace address",
-  "Address Example Before": "Example: https://",
-  "Address Example Bold": "camillenimbus",
-  "Address Example After": ".twake.app",
-  "Address Enter my organization email": "Enter my organization email",
   "Address Next": "Next",
   "Address You haven't filled the address!": "You haven't filled the address!",
 
@@ -340,5 +337,9 @@
   "Welcome Sign in": "Sign in",
   "Welcome Create account": "Create account",
   "Welcome Sign in with company account": "Sign in with company account",
-  "Welcome Your own private cloud": "Welcome to Twake Desktop!"
+  "Welcome By continuing, you agree to our": "By continuing, you agree to our",
+  "Welcome Terms of use": "Terms of use",
+  "Welcome and": "and",
+  "Welcome Privacy Policy": "Privacy Policy",
+  "Welcome Your own private cloud": "Reliable, open-source platform for collaboration"
 }

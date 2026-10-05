@@ -15,7 +15,7 @@ cache:
   - node_modules -> yarn.lock
 
 install:
-  - pwsh: Update-NodeJsInstallation 20.15.1 x64
+  - pwsh: Update-NodeJsInstallation 24.21.0 x64
   - cmd: appveyor-retry pip install setuptools
   - cmd: appveyor-retry yarn install
   - cmd: appveyor-retry node node_modules/electron/install.js

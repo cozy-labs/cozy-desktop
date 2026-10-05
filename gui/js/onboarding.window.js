@@ -22,8 +22,11 @@ import type { Event as ElectronEvent } from 'electron'
 import type { TwakeConfiguration } from '../../core/utils/twake'
 */
 
-const ONBOARDING_SCREEN_WIDTH = 768
-const ONBOARDING_SCREEN_HEIGHT = 680
+// XXX: expected content size is 728x505 but the actual window size needs to be
+// bigger.
+const ONBOARDING_SCREEN_WIDTH = 782
+const ONBOARDING_SCREEN_HEIGHT = 595
+
 const LOGIN_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
 const LOGIN_SCREEN_HEIGHT = 740
 
@@ -33,6 +36,7 @@ module.exports = class OnboardingWM extends WindowManager {
       title: 'ONBOARDING',
       show: false,
       center: true,
+      useContentSize: true,
       width: ONBOARDING_SCREEN_WIDTH,
       height: ONBOARDING_SCREEN_HEIGHT
     }
@@ -51,6 +55,13 @@ module.exports = class OnboardingWM extends WindowManager {
 
   hash() {
     return '#onboarding'
+  }
+
+  centerOnScreen(width /*: number */, height /*: number */) {
+    // The Figma frames give content dimensions: size the web content, not the
+    // window frame (the title bar would otherwise eat into the layout).
+    this.win.setContentSize(width, height)
+    this.win.center()
   }
 
   async jumpToSyncPath() {
@@ -371,10 +382,15 @@ module.exports = class OnboardingWM extends WindowManager {
 
   checkSyncPath(syncPath /*: string */, eventSender /*: WindowManager */) {
     const result = this.desktop.checkSyncPath(syncPath)
-    eventSender.send('folder-chosen', {
-      folder: result.syncPath,
-      error: result.error ? `Folder ${result.error}` : null
-    })
+    // On a fresh config `syncPath` is undefined: nothing to announce to Elm
+    // yet, and the `folder` port expects a String (sending `undefined` would
+    // crash the port).
+    if (result.syncPath) {
+      eventSender.send('folder-chosen', {
+        folder: result.syncPath,
+        error: result.error ? `Folder ${result.error}` : null
+      })
+    }
     return result
   }
 

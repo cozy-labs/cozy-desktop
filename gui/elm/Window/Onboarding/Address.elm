@@ -12,12 +12,12 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import I18n exposing (Helpers)
-import Icons
 import Ports
 import String exposing (contains)
 import Url
 import Util.Keyboard as Keyboard
 import View.BackButton as BackButton
+import View.Logo as Logo
 import Window.Onboarding.Context as Context exposing (Context)
 
 
@@ -196,58 +196,45 @@ view helpers context =
             ]
         ]
         [ div
+            [ class "wizard__back" ]
+            [ BackButton.view helpers GoToWelcome
+            ]
+        , div
             [ class "step-content" ]
-            [ div
-                [ class "u-pos-absolute u-top-xs u-left-xs" ]
-                [ BackButton.view helpers GoToWelcome
-                ]
+            [ Logo.view False
+            , h1 [ class "wizard__title" ] [ text (helpers.t "Address Sign in") ]
             , if isValid then
-                Icons.badge Icons.twakeDrive
-
-              else
-                Icons.bigCross
-            , h1 [] [ text (helpers.t "Address Sign in") ]
-            , if isValid then
-                p [ class "adress-helper" ]
+                p [ class "wizard__helper" ]
                     [ text (helpers.t "Address To sign in and access your Twake Workplace, please enter its URL.") ]
 
               else
-                p [ class "error-message" ]
+                p [ class "wizard__helper wizard__helper--error" ]
                     [ text (helpers.t error) ]
-            , div [ class "coz-form-group" ]
-                [ label [ class "coz-form-label" ]
-                    [ text (helpers.t "Address Twake Workplace address") ]
-                , div [ class "input-wrapper" ]
-                    [ span [ class "address_https" ]
-                        [ text "https://" ]
-                    , input
-                        [ placeholder "claude.twake.app"
-                        , classList
-                            [ ( "wizard__address", True )
-                            , ( "error", not isValid )
-                            ]
-                        , type_ "text"
-                        , value context.addressConfig.address
-                        , disabled context.addressConfig.busy
-                        , onInput FillAddress
-                        , Keyboard.onEnter RegisterWithURL
+            , div [ class "wizard__field" ]
+                [ label [ class "wizard__field-label" ]
+                    [ text (helpers.t "Address URL") ]
+                , input
+                    [ placeholder "https://claude.twake.app"
+                    , classList
+                        [ ( "wizard__address", True )
+                        , ( "error", not isValid )
                         ]
-                        []
+                    , type_ "text"
+                    , value context.addressConfig.address
+                    , disabled context.addressConfig.busy
+                    , onInput FillAddress
+                    , Keyboard.onEnter RegisterWithURL
                     ]
-                ]
-            , div [ class "cozy-form-tip" ]
-                [ text (helpers.t "Address Example Before")
-                , strong [] [ text (helpers.t "Address Example Bold") ]
-                , text (helpers.t "Address Example After")
+                    []
                 ]
             , a
-                [ class "more-info"
+                [ class "wizard__link"
                 , href "#"
                 , onClick LoginWithCustomServer
                 ]
-                [ span [] [ text (helpers.t "Address Enter my organization email") ] ]
+                [ text (helpers.t "Address Sign in with company account") ]
             , a
-                [ class "c-btn c-btn--full u-mt-1"
+                [ class "c-btn c-btn--full"
                 , href "#"
                 , if context.addressConfig.address == "" then
                     attribute "disabled" "true"
