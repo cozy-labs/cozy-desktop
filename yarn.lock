@@ -1266,11 +1266,11 @@
   resolved "https://registry.yarnpkg.com/@eslint/js/-/js-8.57.1.tgz#de633db3ec2ef6a3c89e2f19038063e8a122e2c2"
   integrity sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==
 
-"@gyselroth/windows-fsstat@https://github.com/taratatach/node-windows-fsstat.git#2.0.0":
-  version "2.0.0"
-  resolved "https://github.com/taratatach/node-windows-fsstat.git#104edd64bc63ea20ea1993b86387d3cb4f31fdca"
+"@gyselroth/windows-fsstat@https://github.com/taratatach/node-windows-fsstat.git#3.0.1":
+  version "3.0.1"
+  resolved "https://github.com/taratatach/node-windows-fsstat.git#2c925f4abef76f4635d4a14c9e0be21db7d1ab3a"
   dependencies:
-    nan "^2.20.0"
+    nan "^2.26.2"
     node-gyp "^10.1.0"
 
 "@humanwhocodes/config-array@^0.13.0":
@@ -7686,10 +7686,10 @@ nan@2.17.0:
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.17.0.tgz#c0150a2368a182f033e9aa5195ec76ea41a199cb"
   integrity sha512-2ZTgtl0nJsO0KQCjEpxcIr5D+Yv90plTitZt9JBfQvVJDS5seMl3FOvsh3+9CoYWXf/1l5OaZzzF6nDm4cagaQ==
 
-nan@^2.20.0:
-  version "2.22.0"
-  resolved "https://registry.yarnpkg.com/nan/-/nan-2.22.0.tgz#31bc433fc33213c97bad36404bb68063de604de3"
-  integrity sha512-nbajikzWTMwsW+eSsNm3QwlOs7het9gGJU5dDZzRTQGk03vyBOauxgI4VakDzE0PtsGTmXPsXTbbjVhRwR5mpw==
+nan@^2.26.2:
+  version "2.29.0"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.29.0.tgz#95bace50f153289240573c08401acc63a30659d4"
+  integrity sha512-GlGk3HIvitbvs+LT3g6XUP1kpirKNvmDFwF/bmo6XNWSb/eYEs/O4bfgIEIXCZ+lIOTS5xNwDvSGMw6FJdAhtA==
 
 napi-macros@~2.0.0:
   version "2.0.0"

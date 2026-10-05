@@ -188,7 +188,7 @@
     "treeify": "^1.1.0"
   },
   "optionalDependencies": {
-    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#2.0.0"
+    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#3.0.1"
   },
   "resolutions": {
     "node-abi": "3.5.0"
