@@ -1315,6 +1315,11 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
+"@linagora/twake-css@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@linagora/twake-css/-/twake-css-1.0.0.tgz#d1a23ab3853b6df88a6b9345463bc91428c365b8"
+  integrity sha512-bhGX6UX/3djdnzbvhSVrl8Lu7GkXGleXuuRHNUozFFpnLNyZUTkS51RkjLJ+g0fD3lrvfx61xcy1N4GG2v35ag==
+
 "@malept/cross-spawn-promise@^1.1.0":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@malept/cross-spawn-promise/-/cross-spawn-promise-1.1.1.tgz#504af200af6b98e198bce768bc1730c6936ae01d"
