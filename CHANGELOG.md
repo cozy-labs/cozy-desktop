@@ -1,5 +1,43 @@
 # Twake Desktop: Changelog
 
+## 5.6.0-beta.3 - 2026-10-05
+
+Improvements for all users:
+
+- The onboarding screens have been redesigned with the Twake visual identity.
+- Clicking "Sign in" during onboarding opened your web browser immediately,
+  without any warning.
+  The onboarding now explains that the browser is about to open for the
+  sign-in, opens it automatically after a few seconds, and offers a button to
+  open it right away.
+- Alerts about a folder that could not be synchronized were labeled as if they
+  concerned a file.
+  Folder alerts are now correctly labeled as folders and shown with the folder
+  icon.
+- Renaming a document that had a synchronization alert added a new alert for
+  each name, and fixing the problem removed only the last one, leaving stale
+  alerts in the tray panel.
+  A single alert is now kept per document: it carries the document's current
+  name, and resolving the problem removes it whatever the name.
+- On a fresh installation or after resetting the application's configuration,
+  checking the synchronization folder during onboarding could fail.
+  The folder check is now skipped when no folder has been configured yet.
+
+Improvements for macOS users:
+
+- The option to launch Twake Desktop automatically when signing in to your
+  session could stop working on recent macOS versions.
+  Automatic launch now uses the native macOS mechanism, which is reliable on
+  recent versions.
+- Moving a file onto another one to replace it could, under load, send the
+  moved file to the trash instead of moving it.
+  The replacement move is now detected regardless of the order in which the
+  system reports the file events.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.6.0-beta.2 - 2026-09-25
 
 Improvements for all users:
