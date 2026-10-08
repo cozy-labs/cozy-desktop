@@ -83,7 +83,10 @@ const config = {
     // Electron-Builder will then swtich back to the default Comodoca server.
     rfc3161TimeStampServer: 'http://timestamp.digicert.com',
     sign: 'build/windows/customSign.js',
-    signDlls: true,
+    // Sign every native module (`.node`) as well as DLLs: Windows Smart App
+    // Control blocks unsigned binaries when loading them (upstream issue
+    // electron-userland/electron-builder#7329).
+    signExts: ['.dll', '.node'],
     signingHashAlgorithms: ['sha256']
   },
 
