@@ -818,6 +818,59 @@ describe('remote.Remote', function() {
       })
     })
 
+    context('when the record was dissociated from its remote side', () => {
+      // It can happen when a conflict was detected during the merge of a
+      // remote change (e.g. a remote file was added at the move destination
+      // while the local move was still unsynchronized): the conflict
+      // resolution dissociates the moved record from its remote side to let
+      // Sync apply the move. The move snapshot (`moveFrom.remote`) is then
+      // the only remaining reference to the remote document to move, and its
+      // revision is up-to-date.
+      it('moves the file with the move snapshot revision', async function() {
+        const dstDir = await builders
+          .remoteDir()
+          .name('moved-to')
+          .inRootDir()
+          .create()
+        await builders
+          .metadir()
+          .fromRemote(dstDir)
+          .upToDate()
+          .create()
+
+        const remoteDoc = await builders
+          .remoteFile()
+          .name('cat6.jpg')
+          .data('meow')
+          .create()
+        const old = builders
+          .metafile()
+          .fromRemote(remoteDoc)
+          .upToDate()
+          .build()
+
+        const doc = builders
+          .metafile()
+          .moveFrom(old)
+          .path('moved-to/cat7.jpg')
+          .changedSide('local')
+          .noRemote()
+          .build()
+
+        await this.remote.moveAsync(doc, old)
+
+        const file = await remoteHelpers.byId(old.remote._id)
+        should(file).have.properties({
+          _id: old.remote._id,
+          dir_id: dstDir._id,
+          name: 'cat7.jpg',
+          type: 'file'
+        })
+        // The move response refreshed the record's remote side
+        should(doc.remote).have.property('_rev', file._rev)
+      })
+    })
+
     context(
       'when the remote updated_at value is more recent than the local one',
       () => {

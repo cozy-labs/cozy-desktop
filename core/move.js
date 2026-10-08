@@ -54,16 +54,24 @@ function move(
   // We don't chain for child moves: their `moveFrom` is the original path
   // before the parent move, which the parent's sync will relocate. Chaining
   // would point at a path the parent move will have already moved away.
-  dst.moveFrom =
+  // Clone the resulting snapshot: callers keep using `src` after the merge
+  // (e.g. `child()` marks it, Sync reads its sides) and must not see the
+  // snapshot's later mutations (rev refresh, `childMove` marking).
+  dst.moveFrom = _.cloneDeep(
     src.moveFrom &&
-    !src.moveFrom.childMove &&
-    !metadata.isAtLeastUpToDate('local', src)
+      !src.moveFrom.childMove &&
+      !metadata.isAtLeastUpToDate('local', src)
       ? src.moveFrom
       : src
+  )
   // TODO: remove `_id` and `_rev` from the exception list above and stop
   // assigning them manually.
   dst._id = src._id
   dst._rev = src._rev
+
+  // When the move was merged from a remote change, its revision is fresher
+  // than the source record's one and must be propagated to the move snapshot.
+  metadata.refreshRemoteMoveRev(dst)
 
   metadata.markSide(side, dst, src)
 }
@@ -76,7 +84,9 @@ function child(
   dst /*: Metadata */
 ) {
   move(side, src, dst)
-  src.childMove = true
+  // Mark the snapshot that will be saved: Sync reads the flag on the saved
+  // doc's `moveFrom` (`move()` cloned it, so it is no longer `src`).
+  if (dst.moveFrom) dst.moveFrom.childMove = true
 }
 
 function convertToDestinationAddition(
