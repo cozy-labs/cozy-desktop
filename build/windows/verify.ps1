@@ -6,14 +6,6 @@ Param(
 
   [Parameter(Mandatory)]
   [String]
-  $Fingerprint,
-
-  [Parameter(Mandatory)]
-  [String]
-  $SmctlDir,
-
-  [Parameter(Mandatory)]
-  [String]
   $SignToolDir
 )
 
@@ -24,13 +16,11 @@ $env:Path = @(
   $SignToolDir
 ) -join ';'
 
-# Get the smctl.exe executable
-$smctl = "$SmctlDir\smctl.exe"
+# XXX: `smctl sign verify` skips the file extensions it does not know
+# about (e.g. `.node` files, see sign.ps1), so signtool is called
+# directly: it verifies any Windows PE image, whatever its extension.
+& "$SignToolDir\signtool.exe" verify /pa "$FilePath"
 
-# XXX: Force signtool for the same reason as in sign.ps1: smctl would
-# otherwise skip unknown extensions (e.g. `.node`) and report success.
-& "$smctl" sign verify --input="$FilePath" --fingerprint="$Fingerprint" --tool=signtool
-
-# Propagate the exit code of smctl to the caller: pwsh does not do it
+# Propagate the exit code of signtool to the caller: pwsh does not do it
 # automatically, which used to hide verification failures from the build.
 exit $LASTEXITCODE

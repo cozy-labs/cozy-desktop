@@ -30,9 +30,6 @@ exports.default = async function(configuration) {
   if (!process.env.SM_KEYPAIR_ALIAS) {
     throw `Unable to sign files because the keypair alias (SM_KEYPAIR_ALIAS) is not set in the environment.`
   }
-  if (!process.env.SM_CERTIFICATE_FINGERPRINT) {
-    throw `Unable to sign files because the certificate fingerprint (SM_CERTIFICATE_FINGERPRINT) is not set in the environment.`
-  }
 
   // Runs one of the build/windows/*.ps1 scripts with the common arguments
   // passed as proper argv entries instead of quoting paths into a `pwsh
@@ -69,9 +66,5 @@ exports.default = async function(configuration) {
     ['-FilePath', configuration.path, '-KeyPairAlias', process.env.SM_KEYPAIR_ALIAS],
     'code signing'
   )
-  runScript(
-    'verify.ps1',
-    ['-FilePath', configuration.path, '-Fingerprint', process.env.SM_CERTIFICATE_FINGERPRINT],
-    'signature verification'
-  )
+  runScript('verify.ps1', ['-FilePath', configuration.path], 'signature verification')
 }
