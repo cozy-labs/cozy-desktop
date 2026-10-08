@@ -27,7 +27,11 @@ $env:Path = @(
 # Get the smctl.exe executable
 $smctl = "$SmctlDir\smctl.exe"
 
-& "$smctl" sign --input="$FilePath" --keypair-alias="$KeyPairAlias" --verbose
+# XXX: Force signtool: smctl selects the signing tool based on the file
+# extension and silently ignores the ones it does not know (e.g. `.node`
+# files), printing "There were no files found for signing" and exiting
+# with code 0.
+& "$smctl" sign --input="$FilePath" --keypair-alias="$KeyPairAlias" --tool=signtool --verbose
 
 # Propagate the exit code of smctl to the caller: pwsh does not do it
 # automatically, which used to hide signing failures from the build.

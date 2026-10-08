@@ -27,7 +27,9 @@ $env:Path = @(
 # Get the smctl.exe executable
 $smctl = "$SmctlDir\smctl.exe"
 
-& "$smctl" sign verify --input="$FilePath" --fingerprint="$Fingerprint"
+# XXX: Force signtool for the same reason as in sign.ps1: smctl would
+# otherwise skip unknown extensions (e.g. `.node`) and report success.
+& "$smctl" sign verify --input="$FilePath" --fingerprint="$Fingerprint" --tool=signtool
 
 # Propagate the exit code of smctl to the caller: pwsh does not do it
 # automatically, which used to hide verification failures from the build.
