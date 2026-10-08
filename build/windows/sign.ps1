@@ -28,3 +28,7 @@ $env:Path = @(
 $smctl = "$SmctlDir\smctl.exe"
 
 & "$smctl" sign --input="$FilePath" --keypair-alias="$KeyPairAlias" --verbose
+
+# Propagate the exit code of smctl to the caller: pwsh does not do it
+# automatically, which used to hide signing failures from the build.
+exit $LASTEXITCODE

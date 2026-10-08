@@ -28,3 +28,7 @@ $env:Path = @(
 $smctl = "$SmctlDir\smctl.exe"
 
 & "$smctl" sign verify --input="$FilePath" --fingerprint="$Fingerprint"
+
+# Propagate the exit code of smctl to the caller: pwsh does not do it
+# automatically, which used to hide verification failures from the build.
+exit $LASTEXITCODE
