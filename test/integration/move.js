@@ -5,6 +5,7 @@ const path = require('path')
 
 const _ = require('lodash')
 const should = require('should')
+const sinon = require('sinon')
 
 const { TRASH_DIR_ID } = require('../../core/remote/constants')
 const { MAX_SYNC_RETRIES } = require('../../core/sync')
@@ -85,6 +86,71 @@ describe('Move', () => {
 
       await helpers.syncAll()
 
+      should(await helpers.remote.tree()).deepEqual([
+        '.cozy_trash/',
+        'dst/',
+        'dst/file',
+        'src/'
+      ])
+    })
+
+    it('local move with lost remote response', async () => {
+      const oldFile = await pouch.byRemoteIdMaybe(file._id)
+
+      // The local move is merged...
+      await prep.moveFileAsync(
+        'local',
+        _.merge(
+          {
+            path: path.normalize('dst/file'),
+            updated_at: '2017-06-19T08:19:26.769Z'
+          },
+          _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
+        ),
+        oldFile
+      )
+
+      // ...but the response of the remote move request is lost: the request
+      // is applied by the Cozy (the remote revision advances) while the
+      // client gets a network error.
+      const remoteCozy = helpers.remote.side.remoteCozy
+      const originalUpdateAttributesById = remoteCozy.updateAttributesById
+      let loseResponse = true
+      const stub = sinon.stub(remoteCozy, 'updateAttributesById')
+      stub.callsFake(async function(id, attrs, opts) {
+        const result = await originalUpdateAttributesById(id, attrs, opts)
+        if (loseResponse) {
+          loseResponse = false
+          // Response lost after the Cozy applied the change
+          throw new Error('net::ERR_NETWORK_CHANGED')
+        }
+        return result
+      })
+
+      // The move is believed to have failed: UnreachableCozy → offline, and
+      // `moveFrom` is kept.
+      await helpers.sync()
+      clearInterval(helpers._sync.retryInterval)
+
+      // The remote watcher merges the applied move: `doc.remote` is refreshed
+      // with the up-to-date revision while `moveFrom.remote._rev` still holds
+      // the stale one.
+      await helpers.remote.pullChanges()
+
+      const blocked = await pouch.byRemoteIdMaybe(file._id)
+      should(blocked.moveFrom).be.Object()
+      should(blocked.remote._rev).not.equal(oldFile.remote._rev)
+
+      // The retry uses the up-to-date remote revision and succeeds: the
+      // sync state is cleaned up and no alert remains.
+      stub.restore()
+      await helpers._sync._onUserActionCommand({ cmd: 'retry' })
+      await helpers.sync()
+
+      const done = await pouch.byRemoteIdMaybe(file._id)
+      should(done.moveFrom).be.Undefined()
+      should(helpers.events.state.userAlerts).be.empty()
+      should(helpers._sync._blockedCauses.size).equal(0)
       should(await helpers.remote.tree()).deepEqual([
         '.cozy_trash/',
         'dst/',
@@ -554,6 +620,7 @@ describe('Move', () => {
       const doc = builders
         .metadir()
         .path('parent/dst/dir')
+        .noRemote()
         .build()
 
       await prep.moveFolderAsync('local', doc, oldFolder)
@@ -579,6 +646,46 @@ describe('Move', () => {
         'parent/dst/dir/subdir/file',
         'parent/src/'
       ])
+    })
+
+    it('local with a child move merged before the sync', async () => {
+      // Both moves are merged before Sync runs, like when the local watcher
+      // batches the events of a parent move with those of a child move. The
+      // child is then moved on the Cozy by its ancestor's move, which
+      // advances its remote revision, and its own move request must be sent
+      // with that new revision, not with the one from before the parent's
+      // move, else it would be rejected with a 412 Precondition Failed.
+      const oldParent = await pouch.bySyncedPath('parent/src')
+      const parentDoc = builders
+        .metadir()
+        .path('parent/moved')
+        .noRemote()
+        .build()
+      await prep.moveFolderAsync('local', parentDoc, oldParent)
+
+      const oldDir = await pouch.byRemoteIdMaybe(dir._id)
+      const dirDoc = builders
+        .metadir()
+        .path('parent/moved/dir2')
+        .noRemote()
+        .build()
+      await prep.moveFolderAsync('local', dirDoc, oldDir)
+
+      await helpers.syncAll()
+
+      const expectedTree = [
+        'parent/',
+        'parent/dst/',
+        'parent/moved/',
+        'parent/moved/dir2/',
+        'parent/moved/dir2/empty-subdir/',
+        'parent/moved/dir2/subdir/',
+        'parent/moved/dir2/subdir/file'
+      ]
+      should(await helpers.trees('metadata', 'remote')).deepEqual({
+        metadata: expectedTree,
+        remote: expectedTree
+      })
     })
 
     it('from remote cozy', async () => {
@@ -678,6 +785,7 @@ describe('Move', () => {
       const doc = builders
         .metadir()
         .path('parent/dst/dir')
+        .noRemote()
         .build()
 
       await prep.moveFolderAsync('local', doc, oldFolder)

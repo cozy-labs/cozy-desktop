@@ -23,6 +23,11 @@ const win32 = (
   otherwise /*: ?Object */ = undefined
 ) /*: ?Object */ => (process.platform === 'win32' ? win32Data : otherwise)
 
+// `move()` snapshots the source as `moveFrom` and `refreshRemoteMoveRev` keeps
+// that snapshot's remote revision in sync with the freshest known one.
+const movedFrom = (was /*: Object */, doc /*: Object */) /*: Object */ =>
+  _.merge(_.cloneDeep(was), { remote: { _rev: doc.remote._rev } })
+
 /* Resolves with an object describing the side-effects of a Merge call.
  *
  * The returned object has the following properties:
@@ -2145,7 +2150,7 @@ describe('Merge', function() {
               win32({ fileid: was.fileid }),
               {
                 sides: increasedSides(was.sides, this.side, 1),
-                moveFrom: was,
+                moveFrom: movedFrom(was, doc),
                 [this.side]: was[this.side],
                 ino: was.ino,
                 _id: was._id
@@ -2188,7 +2193,7 @@ describe('Merge', function() {
               // We increase the side by 2 since we're merging on the other side
               // of the latest change.
               sides: increasedSides(inError.sides, 'remote', 2),
-              moveFrom: inError,
+              moveFrom: movedFrom(inError, doc),
               local: inError.local
             },
             _.omit(doc, ['_rev', 'errors'])
@@ -2506,7 +2511,7 @@ describe('Merge', function() {
                   _.defaultsDeep(
                     {
                       sides: increasedSides(was.sides, 'remote', 1),
-                      moveFrom: was,
+                      moveFrom: movedFrom(was, doc),
                       overwrite: existing,
                       local: was.local,
                       _id: was._id
@@ -2552,7 +2557,7 @@ describe('Merge', function() {
                   {
                     path: dstPath,
                     sides: increasedSides(was.sides, 'remote', 1),
-                    moveFrom: was,
+                    moveFrom: movedFrom(was, doc),
                     remote: { path: pathUtils.localToRemote(dstPath) },
                     local: was.local,
                     _id: was._id
@@ -3356,7 +3361,7 @@ describe('Merge', function() {
               win32({ fileid: was.fileid }),
               {
                 sides: increasedSides(was.sides, 'remote', 1),
-                moveFrom: was,
+                moveFrom: movedFrom(was, doc),
                 local: was.local,
                 ino: was.ino,
                 _id: was._id
@@ -3886,7 +3891,7 @@ describe('Merge', function() {
               // We increase the side by 2 since we're merging on the other side
               // of the latest change.
               sides: increasedSides(inError.sides, 'remote', 2),
-              moveFrom: inError,
+              moveFrom: movedFrom(inError, doc),
               local: inError.local
             },
             _.omit(doc, ['_rev', 'errors'])
@@ -4248,7 +4253,7 @@ describe('Merge', function() {
               {
                 _id: was._id,
                 sides: increasedSides(was.sides, 'remote', 1),
-                moveFrom: was
+                moveFrom: movedFrom(was, doc)
               },
               _.omit(doc, ['_rev', 'incompatibilities'])
             ),
@@ -4369,7 +4374,7 @@ describe('Merge', function() {
             _.defaults(
               {
                 sides: increasedSides(was.sides, 'remote', 1),
-                moveFrom: was,
+                moveFrom: movedFrom(was, doc),
                 local: was.local,
                 _id: was._id
               },
@@ -4385,6 +4390,67 @@ describe('Merge', function() {
           ],
           resolvedConflicts: []
         })
+      })
+    })
+
+    context('when a child has a pending remote move', () => {
+      it('marks the chained move snapshot as a child move', async function() {
+        const was = await builders
+          .metadir()
+          .path('OLD_DIR')
+          .upToDate()
+          .create()
+        const childRemoteOriginal = builders
+          .remoteFile()
+          .inDir(was.remote)
+          .name('child')
+          .shortRev(1)
+          .build()
+        const childWas = builders
+          .metafile()
+          .fromRemote(childRemoteOriginal)
+          .upToDate()
+          .build()
+        // The child was already moved on the remote side while its local
+        // application is still pending.
+        const childRemote = builders
+          .remoteFile(childRemoteOriginal)
+          .name('moved-child')
+          .shortRev(2)
+          .build()
+        await builders
+          .metafile()
+          .fromRemote(childRemote)
+          .moveFrom(childWas)
+          .sides({ remote: 2, local: 1 })
+          .create()
+        const doc = builders
+          .metadir(was)
+          .path('MOVED_DIR')
+          .unmerged('remote')
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFolderRecursivelyAsync(
+            'remote',
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
+          )
+        )
+
+        const savedChild = _.find(
+          sideEffects.savedDocs,
+          saved => saved.path === 'MOVED_DIR/moved-child'
+        )
+
+        // The child's pending move is chained to the parent's one: Sync must
+        // see it as a child move, not apply it as an independent move.
+        should(savedChild.moveFrom.childMove).be.true()
+        should(savedChild.moveFrom.path).equal(childWas.path)
+        // The chained snapshot tracks the freshest remote revision so Sync
+        // won't send an outdated If-Match if this move is later applied to
+        // the remote side.
+        should(savedChild.moveFrom.remote._rev).equal(savedChild.remote._rev)
       })
     })
 
