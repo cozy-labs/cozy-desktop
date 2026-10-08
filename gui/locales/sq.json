@@ -223,6 +223,10 @@
   "OAuth Login in your browser": "Hyrja në shfletuesin tuaj",
   "OAuth Your login page will open in your default browser in a few seconds.": "Faqja juaj e hyrjes do të hapet në shfletuesin tuaj të parazgjedhur pas disa sekondash.",
   "OAuth Open my browser now": "Hap tani shfletuesin tim",
+  "OAuth Login successful": "Login successful",
+  "OAuth You can now go back to the Twake Desktop application.": "You can now go back to the Twake Desktop application.",
+  "OAuth This tab will close automatically in {0} seconds.": "This tab will close automatically in {0} seconds.",
+  "OAuth This tab could not be closed automatically. You can close it now.": "This tab could not be closed automatically. You can close it now.",
 
   "Quotation Start": "“",
   "Quotation End": "”",

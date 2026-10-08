@@ -41,6 +41,8 @@ const interpolate = (string, ...args) => {
 const capitalize = string =>
   string.replace(string[0], string[0].toLocaleUpperCase(app.getLocale()))
 
+const locale = () => app.locale
+
 const platformName = () => {
   switch (process.platform) {
     case 'darwin':
@@ -64,5 +66,6 @@ module.exports = {
   translate,
   interpolate,
   capitalize,
+  locale,
   platformName
 }

@@ -29,7 +29,7 @@ const { findBasePath } = require('./migrations/configPaths')
 const { Pouch } = require('./pouch')
 const Prep = require('./prep')
 const { Remote } = require('./remote')
-const Registration = require('./remote/registration')
+const { Registration } = require('./remote/registration')
 const { Sync } = require('./sync')
 const { SyncState } = require('./syncstate')
 const flags = require('./utils/flags')
@@ -206,11 +206,17 @@ class App {
   async registerWithDelegationCode(
     fqdn /*: string */,
     code /*: string */,
-    deviceName /*: ?string */
+    deviceName /*: ?string */,
+    redirectURI /*: ?string */
   ) {
     const cozyUrl = getInstanceFromFqdn(fqdn)
     const registration = new Registration(cozyUrl, this.config)
-    return registration.registerWithDelegationCode(pkg, code, deviceName)
+    return registration.registerWithDelegationCode(
+      pkg,
+      code,
+      deviceName,
+      redirectURI
+    )
   }
 
   // Save the config with all the informations for synchonization

@@ -4,6 +4,7 @@
  * @flow
  */
 
+const crypto = require('crypto')
 const http = require('http')
 const os = require('os')
 const url = require('url')
@@ -24,12 +25,17 @@ const log = logger({
   component: 'App'
 })
 
+const LOGIN_SUCCESS_PAGE =
+  '<!DOCTYPE html><html><body>Login successful. You can close this tab and ' +
+  'go back to the Twake Desktop application.</body></html>'
+const OIDC_CALLBACK_CLOSED = 'OIDC_CALLBACK_CLOSED'
+
 /*::
 import type { Config } from '../config'
 import type { OAuthClient } from './client'
 */
 
-module.exports = class Registration {
+class Registration {
   /*::
   cozyUrl: string
   config: Config
@@ -165,4 +171,74 @@ module.exports = class Registration {
       throw err
     }
   }
+}
+
+/*::
+export type OIDCCallbackResult = {
+  callbackURL: string,
+  params: Promise<URLSearchParams>,
+  close: () => void
+}
+*/
+
+async function waitForOIDCCallback(
+  options /*: ?{ successPage: ?string } */ = {}
+) /*: Promise<OIDCCallbackResult> */ {
+  const successPage = (options && options.successPage) || LOGIN_SUCCESS_PAGE
+  const state = crypto.randomBytes(16).toString('hex')
+  const server = http.createServer()
+
+  await new Promise((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', resolve)
+  })
+  const port = (server.address() /*: any */).port
+  const callbackURL = `http://127.0.0.1:${port}/callback?state=${state}`
+
+  const params = new Promise((resolve, reject) => {
+    server.on('request', (request, response) => {
+      request.on('error', () => {})
+      response.on('error', () => {})
+      try {
+        const parsed = new url.URL(request.url || '/', callbackURL)
+        if (parsed.pathname !== '/callback') {
+          response.statusCode = 404
+          response.end()
+        } else if (
+          request.method === 'GET' &&
+          parsed.searchParams.get('state') === state
+        ) {
+          resolve((parsed.searchParams /*: any */))
+          response.writeHead(200, {
+            'Content-Type': 'text/html; charset=utf-8'
+          })
+          response.end(successPage)
+        } else {
+          response.statusCode = 400
+          response.end()
+        }
+      } catch (err) {
+        response.statusCode = 400
+        response.end()
+      }
+    })
+    server.on('error', reject)
+    server.on('close', () => {
+      const err = new Error('OIDC callback server closed without a callback')
+      ;(err /*: Object */).code = OIDC_CALLBACK_CLOSED
+      reject(err)
+    })
+  })
+
+  const close = () => {
+    if (server.listening) server.close()
+  }
+
+  return { callbackURL, params, close }
+}
+
+module.exports = {
+  Registration,
+  waitForOIDCCallback,
+  OIDC_CALLBACK_CLOSED
 }
