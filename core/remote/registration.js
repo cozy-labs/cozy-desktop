@@ -131,10 +131,13 @@ module.exports = class Registration {
     } catch (err) {
       log.error('could not register OAuth client with delegation code', {
         err,
+        errStack: err instanceof Error ? err.stack : undefined,
         code
       })
 
-      this.config.clear()
+      // `config` may be a plain object (e.g. the CI test bootstrap), which
+      // has no `clear()`. Only reset it when it supports that.
+      if (typeof this.config.clear === 'function') this.config.clear()
 
       throw err
     }
@@ -158,9 +161,14 @@ module.exports = class Registration {
 
       return redirectURI
     } catch (err) {
-      log.error('could not register OAuth client', { err })
+      log.error('could not register OAuth client', {
+        err,
+        errStack: err instanceof Error ? err.stack : undefined
+      })
 
-      this.config.clear()
+      // `config` may be a plain object (e.g. the CI test bootstrap), which
+      // has no `clear()`. Only reset it when it supports that.
+      if (typeof this.config.clear === 'function') this.config.clear()
 
       throw err
     }
