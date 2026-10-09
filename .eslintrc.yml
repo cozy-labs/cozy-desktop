@@ -1,4 +1,5 @@
 ---
+root: true
 extends:
   - cozy-app/basics
   - plugin:node/recommended
