@@ -33,7 +33,22 @@ const formBody = form => {
  */
 const _getLoginInfo = async cozyUrl => {
   log.debug('Get CSRF token...')
-  const res = await fetch(cozyUrl('/auth/login'))
+  const loginUrl = cozyUrl('/auth/login')
+  const res = await fetch(loginUrl)
+
+  // An instance behind an OIDC SSO redirects its login page to an external
+  // host, which the native flow simulated here cannot handle: fail early
+  // with an explicit message instead of derailing silently.
+  const finalUrl = new url.URL(res.url)
+  if (finalUrl.host !== new url.URL(loginUrl).host) {
+    throw new Error(
+      `Instance login page redirects to an external host (${finalUrl.host}), ` +
+        'most probably an OIDC SSO: the automated native registration cannot ' +
+        'be used against such an instance. ' +
+        'See https://github.com/cozy-labs/cozy-desktop/issues/2492'
+    )
+  }
+
   const body = await res.text()
   const $ = cheerio.load(body)
   const csrf_token = $('#csrf_token').val()
