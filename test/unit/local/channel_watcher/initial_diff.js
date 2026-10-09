@@ -676,13 +676,11 @@ onPlatforms(['linux', 'win32'], () => {
           .event()
           .fromDoc(stillEmptyFile)
           .action('scan')
-          .mtime(new Date(stillEmptyFile.updated_at))
           .build()
         const sameContentFileScan = builders
           .event()
           .fromDoc(sameContentFile)
           .action('scan')
-          .ctime(new Date(sameContentFile.updated_at))
           .build()
         inputBatch([stillEmptyFileScan, sameContentFileScan, initialScanDone])
 
@@ -726,7 +724,6 @@ onPlatforms(['linux', 'win32'], () => {
           .event()
           .fromDoc(dir)
           .action('scan')
-          .mtime(new Date(dir.updated_at))
           .build()
         inputBatch([dirScan, initialScanDone])
 
