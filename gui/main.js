@@ -49,7 +49,6 @@ const {
   OAUTH_CLIENT_REVOKED_CODE,
   OAUTH_CLIENT_REVOKED_MESSAGE
 } = require('../core/remote/errors')
-const { COZY_SCHEME } = require('../core/utils/twake')
 const { translate } = i18n
 
 const DAILY = 3600 * 24 * 1000
@@ -571,23 +570,6 @@ const dumbhash = k =>
 /*
  *
  */
-app.setAsDefaultProtocolClient(COZY_SCHEME)
-
-/*
- *
- */
-const handleDeepLink = async url => {
-  log.info('handleDeepLink', { url })
-
-  if (onboardingWindow) {
-    await onboardingWindow.handleDeepLink(url)
-  } else {
-    log.warn('could not handle deeplink request: onboarding window is closed', {
-      onboardingWindow
-    })
-  }
-}
-
 /* This event is emitted inside the primary instance and is guaranteed to be
  * emitted after the `ready` event of `app` gets emitted.
  *
@@ -599,14 +581,6 @@ const handleDeepLink = async url => {
  */
 app.on('second-instance', async (event, commandLine) => {
   log.info('second instance invoked with arguments', { commandLine })
-
-  const url = commandLine.find(arg => arg.startsWith(`${COZY_SCHEME}://`))
-  if (url) {
-    handleDeepLink(url)
-    return
-  } else {
-    log.info('no Desktop url found in command line arguments')
-  }
 
   try {
     await whenDesktopReady
@@ -629,21 +603,6 @@ app.on('second-instance', async (event, commandLine) => {
 
   // Make sure the main window exists before trying to show it
   if (trayWindow) showWindow()
-})
-
-/*
- * macOS only.
- *
- */
-app.on('open-url', (event, url) => {
-  log.info('received open-url event', { url })
-
-  if (url.startsWith(`${COZY_SCHEME}://`)) {
-    event.preventDefault()
-    handleDeepLink(url)
-  } else {
-    log.info('not a Desktop url', { url })
-  }
 })
 
 /* macOS only.

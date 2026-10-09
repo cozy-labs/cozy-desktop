@@ -1,3 +1,4 @@
+const { app } = require('electron')
 const sinon = require('sinon')
 
 const WindowManager = require('../../../gui/js/window_manager')
@@ -46,6 +47,61 @@ describe('window_manager', () => {
 
       sinon.assert.callOrder(win.restore, win.focus)
       sinon.assert.calledOnce(win.restore)
+      sinon.assert.calledOnce(win.focus)
+    })
+  })
+
+  describe('stealFocus', () => {
+    const sandbox = sinon.createSandbox()
+    let windowManager
+    let win
+
+    beforeEach(() => {
+      win = {
+        isMinimized: sandbox.stub(),
+        restore: sandbox.spy(),
+        show: sandbox.spy(),
+        focus: sandbox.spy()
+      }
+      windowManager = Object.create(WindowManager.prototype)
+      windowManager.win = win
+      sandbox.stub(app, 'focus')
+    })
+
+    afterEach(() => sandbox.restore())
+
+    it('does nothing when the window is closed', () => {
+      windowManager.win = null
+
+      windowManager.stealFocus()
+
+      sinon.assert.notCalled(app.focus)
+      sinon.assert.notCalled(win.isMinimized)
+      sinon.assert.notCalled(win.restore)
+      sinon.assert.notCalled(win.show)
+      sinon.assert.notCalled(win.focus)
+    })
+
+    it('makes the app active, shows and focuses an existing window', () => {
+      win.isMinimized.returns(false)
+
+      windowManager.stealFocus()
+
+      sinon.assert.calledOnceWithExactly(app.focus, { steal: true })
+      sinon.assert.notCalled(win.restore)
+      sinon.assert.callOrder(win.show, win.focus)
+      sinon.assert.calledOnce(win.show)
+      sinon.assert.calledOnce(win.focus)
+    })
+
+    it('restores a minimized window before showing and focusing it', () => {
+      win.isMinimized.returns(true)
+
+      windowManager.stealFocus()
+
+      sinon.assert.callOrder(win.restore, win.show, win.focus)
+      sinon.assert.calledOnce(win.restore)
+      sinon.assert.calledOnce(win.show)
       sinon.assert.calledOnce(win.focus)
     })
   })

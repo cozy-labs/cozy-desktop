@@ -5,6 +5,7 @@ const { app, dialog, session, BrowserView, shell } = require('electron')
 
 const autoLaunch = require('./autolaunch')
 const { translate } = require('./i18n')
+const { buildLoginSuccessPage } = require('./login_success_page')
 const { SESSION_PARTITION_NAME } = require('./network')
 const { addFileManagerShortcut } = require('./shortcut')
 const WindowManager = require('./window_manager')
@@ -12,10 +13,10 @@ const log = require('../../core/app').logger({
   component: 'GUI/Onboarding'
 })
 const {
-  COZY_SCHEME,
-  oidcLoginURL,
-  webFingerURL
-} = require('../../core/utils/twake')
+  OIDC_CALLBACK_CLOSED,
+  waitForOIDCCallback
+} = require('../../core/remote/registration')
+const { oidcLoginURL, webFingerURL } = require('../../core/utils/twake')
 
 /*::
 import type { Event as ElectronEvent } from 'electron'
@@ -47,7 +48,6 @@ module.exports = class OnboardingWM extends WindowManager {
       'register-with-url': this.onRegisterWithURL,
       'register-with-email': this.onRegisterWithEmail,
       'start-oauth': this.startOAuth,
-      'handle-deeplink': this.handleDeepLink,
       'choose-folder': this.onChooseFolder,
       'start-sync': this.onStartSync
     }
@@ -174,6 +174,11 @@ module.exports = class OnboardingWM extends WindowManager {
 
       enableRemoteModule(this.win.webContents)
 
+      this.win.on('closed', () => {
+        if (this.oidcWaiter) {
+          this.oidcWaiter.close()
+        }
+      })
       this.win.on('closed', app.quit)
 
       if (this.shouldJumpToSyncPath) {
@@ -326,20 +331,57 @@ module.exports = class OnboardingWM extends WindowManager {
   }
 
   async startOAuth(event /*: ElectronEvent */, url /*: string */) {
-    url = url || oidcLoginURL()
-    log.info('starting OAuth flow in browser', { url })
-    shell.openExternal(`${url}?redirect_after_oidc=${COZY_SCHEME}://`)
+    if (this.oidcWaiter) {
+      this.oidcWaiter.close()
+    }
+
+    let waiter = null
+    try {
+      waiter = await waitForOIDCCallback({
+        successPage: buildLoginSuccessPage()
+      })
+      this.oidcWaiter = waiter
+      const { callbackURL, params } = waiter
+
+      url = url || oidcLoginURL()
+      log.info('starting OAuth flow in browser', { url })
+      shell.openExternal(
+        `${url}?redirect_after_oidc=${encodeURIComponent(callbackURL)}`
+      )
+
+      const callbackParams = await params
+
+      await this.handleOIDCCallback(
+        callbackParams.get('fqdn'),
+        callbackParams.get('code'),
+        callbackURL
+      )
+    } catch (err) {
+      if (err && err.code === OIDC_CALLBACK_CLOSED) return
+      log.error('failed OAuth flow in browser', { err, sentry: true })
+      event.sender.send(
+        'registration-error',
+        translate('OAuth Could not login')
+      )
+    } finally {
+      if (waiter) {
+        waiter.close()
+      }
+      if (this.oidcWaiter === waiter) {
+        this.oidcWaiter = null
+      }
+    }
   }
 
-  async handleDeepLink(url /*: string */) {
-    const deeplink = new URL(url)
-    const code = deeplink.searchParams.get('code')
-    const fqdn = deeplink.searchParams.get('fqdn')
-
-    this.focus()
+  async handleOIDCCallback(
+    fqdn /*: ?string */,
+    code /*: ?string */,
+    redirectURI /*: ?string */
+  ) {
+    this.stealFocus()
 
     if (!code || !fqdn) {
-      log.error('invalid OAuth callback', { url })
+      log.error('invalid OAuth callback', { code, fqdn })
       this.win.webContents.send(
         'registration-error',
         translate('OAuth Could not login')
@@ -348,7 +390,12 @@ module.exports = class OnboardingWM extends WindowManager {
     }
 
     try {
-      await this.desktop.registerWithDelegationCode(fqdn, code)
+      await this.desktop.registerWithDelegationCode(
+        fqdn,
+        code,
+        null,
+        redirectURI
+      )
     } catch (err) {
       log.error('failed registering device with Twake instance', {
         err,

@@ -9,7 +9,6 @@ export type TwakeConfiguration = {
 }
 */
 
-const COZY_SCHEME = 'cozy'
 const UNSECURE_DOMAINS = ['cozy.tools', 'localhost', 'nip.io']
 
 const managerEnv = () /*: string */ => process.env.MANAGER_ENV || 'prod'
@@ -98,7 +97,6 @@ const removeTrailingSlash = (value /*: string */) /*: string */ => {
 }
 
 module.exports = {
-  COZY_SCHEME,
   managerEnv,
   managerURL,
   oidcRoute,

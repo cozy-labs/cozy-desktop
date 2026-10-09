@@ -124,6 +124,28 @@ module.exports = class WindowManager {
     return this.win.focus()
   }
 
+  // Bring the window to the front when another application (typically the
+  // browser during the OAuth flow) currently owns the focus.
+  //
+  // `BrowserWindow#focus()` never steals the focus from another application,
+  // and the OS doesn't activate us when the login completes in the browser,
+  // so we have to ask for the focus explicitly.
+  //
+  // XXX: on Wayland (e.g. GNOME), no application can take the focus by
+  // itself: activating a window requires an activation token handed over by
+  // the focused application or a launcher, which a background callback
+  // cannot provide. All we can do there is ask politely and hope the user
+  // comes back to us; on macOS and Windows this actually does the job.
+  stealFocus() {
+    if (!this.win) return
+
+    if (this.win.isMinimized()) this.win.restore()
+
+    app.focus({ steal: true })
+    this.win.show()
+    return this.win.focus()
+  }
+
   reload() {
     if (this.win) {
       this.log.trace('reload')

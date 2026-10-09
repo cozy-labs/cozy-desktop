@@ -223,6 +223,10 @@
   "OAuth Login in your browser": "在浏览器中登录",
   "OAuth Your login page will open in your default browser in a few seconds.": "您的登录页面将在几秒钟后在默认浏览器中打开。",
   "OAuth Open my browser now": "立即打开我的浏览器",
+  "OAuth Login successful": "Login successful",
+  "OAuth You can now go back to the Twake Desktop application.": "You can now go back to the Twake Desktop application.",
+  "OAuth This tab will close automatically in {0} seconds.": "This tab will close automatically in {0} seconds.",
+  "OAuth This tab could not be closed automatically. You can close it now.": "This tab could not be closed automatically. You can close it now.",
 
   "Quotation Start": "“",
   "Quotation End": "”",

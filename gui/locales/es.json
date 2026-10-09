@@ -235,6 +235,10 @@
   "OAuth Login in your browser": "Inicio de sesión en su navegador",
   "OAuth Your login page will open in your default browser in a few seconds.": "Su página de inicio de sesión se abrirá en su navegador predeterminado en unos segundos.",
   "OAuth Open my browser now": "Abrir mi navegador ahora",
+  "OAuth Login successful": "Inicio de sesión correcto",
+  "OAuth You can now go back to the Twake Desktop application.": "Ya puede volver a la aplicación Twake Desktop.",
+  "OAuth This tab will close automatically in {0} seconds.": "Esta pestaña se cerrará automáticamente en {0} segundos.",
+  "OAuth This tab could not be closed automatically. You can close it now.": "Esta pestaña no se pudo cerrar automáticamente. Puede cerrarla ahora.",
 
   "Quotation Start": "“",
   "Quotation End": "”",

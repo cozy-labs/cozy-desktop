@@ -9,7 +9,7 @@ const url = require('url')
 
 const cheerio = require('cheerio')
 
-const Registration = require('../../core/remote/registration')
+const { Registration } = require('../../core/remote/registration')
 const { logger } = require('../../core/utils/logger')
 
 const log = logger({
