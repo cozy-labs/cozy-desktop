@@ -22,18 +22,25 @@ exports.default = async function(configuration) {
   const whoami = 'customSign.js'
 
   if (!process.env.SM_INSTALL_DIR) {
-    throw `Unable to sign files because the path to smctl.exe is not set in the environment.`
+    throw new Error(
+      `Unable to sign files because the path to smctl.exe is not set in the environment.`
+    )
   }
   if (!process.env.SIGNTOOL_DIR) {
-    throw `Unable to sign files because the path to signtool.exe is not set in the environment.`
+    throw new Error(
+      `Unable to sign files because the path to signtool.exe is not set in the environment.`
+    )
   }
   if (!process.env.SM_KEYPAIR_ALIAS) {
-    throw `Unable to sign files because the keypair alias (SM_KEYPAIR_ALIAS) is not set in the environment.`
+    throw new Error(
+      `Unable to sign files because the keypair alias (SM_KEYPAIR_ALIAS) is not set in the environment.`
+    )
   }
 
-  // Runs one of the build/windows/*.ps1 scripts with the common arguments
-  // passed as proper argv entries instead of quoting paths into a `pwsh
-  // -Command` string.
+  // Runs one of the build/windows/*.ps1 scripts with its arguments passed as
+  // proper argv entries instead of quoting paths into a `pwsh -Command`
+  // string. Each script declares the parameters it needs: adding unused
+  // parameters here fails the parameter binding of the script.
   const runScript = (name, args, step) => {
     const { status, error } = spawnSync(
       'pwsh',
@@ -44,27 +51,38 @@ exports.default = async function(configuration) {
         'Unrestricted',
         '-File',
         path.join(__dirname, name),
-        ...args,
-        '-SmctlDir',
-        process.env.SM_INSTALL_DIR,
-        '-SignToolDir',
-        process.env.SIGNTOOL_DIR
+        ...args
       ],
       { stdio: 'inherit' }
     )
 
     if (error != null) {
-      throw `[${whoami}] Exception thrown during ${step}: ${error.message}`
+      throw new Error(`[${whoami}] Exception thrown during ${step}: ${error.message}`)
     }
     if (status !== 0) {
-      throw `[${whoami}] ${step} failed with exit code ${status} (see the pwsh output above).`
+      throw new Error(
+        `[${whoami}] ${step} failed with exit code ${status} (see the pwsh output above).`
+      )
     }
   }
 
   runScript(
     'sign.ps1',
-    ['-FilePath', configuration.path, '-KeyPairAlias', process.env.SM_KEYPAIR_ALIAS],
+    [
+      '-FilePath',
+      configuration.path,
+      '-KeyPairAlias',
+      process.env.SM_KEYPAIR_ALIAS,
+      '-SmctlDir',
+      process.env.SM_INSTALL_DIR,
+      '-SignToolDir',
+      process.env.SIGNTOOL_DIR
+    ],
     'code signing'
   )
-  runScript('verify.ps1', ['-FilePath', configuration.path], 'signature verification')
+  runScript(
+    'verify.ps1',
+    ['-FilePath', configuration.path, '-SignToolDir', process.env.SIGNTOOL_DIR],
+    'signature verification'
+  )
 }
