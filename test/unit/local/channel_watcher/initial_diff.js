@@ -552,7 +552,7 @@ onPlatforms(['linux', 'win32'], () => {
           .ino(2)
           .upToDate()
           .create()
-        await builders
+        const baz = await builders
           .metafile()
           .path('baz')
           .ino(3)
@@ -563,10 +563,8 @@ onPlatforms(['linux', 'win32'], () => {
 
         const bazScan = builders
           .event()
+          .fromDoc(baz)
           .action('scan')
-          .kind('file')
-          .path('baz')
-          .ino(3)
           .build()
         inputBatch([bazScan, initialScanDone])
 
@@ -582,7 +580,11 @@ onPlatforms(['linux', 'win32'], () => {
           .pop()
 
         should(events).deepEqual([
-          bazScan,
+          {
+            ...bazScan,
+            md5sum: baz.md5sum,
+            initialDiff: { md5sumReusedFrom: baz.path }
+          },
           {
             action: 'deleted',
             initialDiff: {
