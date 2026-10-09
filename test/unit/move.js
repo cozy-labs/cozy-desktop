@@ -163,6 +163,65 @@ describe('move', () => {
 
       should(dst.moveFrom).eql(src)
     })
+
+    it('refreshes the move snapshot revision with the merged remote one', async () => {
+      // Simulates the merge of the remote move that the Cozy applied while
+      // the response of the client's own move request was lost: the remote
+      // revision advanced and was merged into the destination's remote info,
+      // while the move snapshot still holds the revision from before the
+      // move. Sending the outdated revision in the `If-Match` header of the
+      // move request would be rejected with a 412 Precondition Failed.
+      const originalSrc = await builders
+        .metadata()
+        .path('src')
+        .upToDate()
+        .create()
+      const src = await builders
+        .metadata()
+        .moveFrom(originalSrc)
+        .path('src*')
+        .changedSide('remote')
+        .create()
+      const dst = builders
+        .metadata()
+        .path('dst')
+        .remoteId(originalSrc.remote._id)
+        .remoteRev(2)
+        .build()
+
+      move('remote', src, dst)
+
+      should(_.get(dst, 'moveFrom.remote._rev')).equal(
+        _.get(dst, 'remote._rev')
+      )
+    })
+
+    it('does not refresh the move snapshot of another remote document', async () => {
+      // The change merged at the destination is for another remote document
+      // (e.g. an overwriting move): its revision must not leak into the move
+      // snapshot of the moved document.
+      const originalSrc = await builders
+        .metadata()
+        .path('src')
+        .upToDate()
+        .create()
+      const src = await builders
+        .metadata()
+        .moveFrom(originalSrc)
+        .path('src*')
+        .changedSide('remote')
+        .create()
+      const dst = builders
+        .metadata()
+        .path('dst')
+        .remoteId('other-remote-id')
+        .remoteRev(9)
+        .build()
+
+      move('remote', src, dst)
+
+      should(_.get(dst, 'moveFrom.remote._rev')).equal(originalSrc.remote._rev)
+    })
   })
 
   describe('convertToDestinationAddition', () => {

@@ -189,6 +189,8 @@ class Merge {
             ? file.executable
             : doc.executable
       }
+      // The spread above rebuilt `doc` without refreshing the move snapshot.
+      metadata.refreshRemoteMoveRev(doc)
 
       if (metadata.equivalent(doc, file)) {
         log.info('up to date', { path: doc.path })
@@ -396,6 +398,8 @@ class Merge {
         // local document.
         tags: doc.tags.length === 0 ? folder.tags : doc.tags
       }
+      // The spread above rebuilt `doc` without refreshing the move snapshot.
+      metadata.refreshRemoteMoveRev(doc)
 
       if (metadata.equivalent(folder, doc)) {
         log.info('up to date', { path: doc.path })
