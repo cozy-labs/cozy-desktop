@@ -20,15 +20,15 @@ install:
   - cmd: appveyor-retry yarn install
   - cmd: appveyor-retry node node_modules/electron/install.js
   - cmd: appveyor-retry yarn install:electron
-  - pwsh: yarn build:css; yarn build:elm
+  - pwsh: yarn build:css; yarn build:elm; exit $LASTEXITCODE
 
 test_script:
-  - pwsh: if ($env:BUILD_JOB -ne "build") { yarn bootstrap:remote }
-  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:elm }
-  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:world --timeout $env:MOCHA_TIMEOUT }
-  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:unit --timeout $env:MOCHA_TIMEOUT }
-  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:integration --timeout $env:MOCHA_TIMEOUT }
-  - pwsh: if ($env:BUILD_JOB -eq "scenarios") { yarn test:scenarios --timeout $env:MOCHA_TIMEOUT }
+  - pwsh: if ($env:BUILD_JOB -ne "build") { yarn bootstrap:remote; exit $LASTEXITCODE }
+  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:elm; exit $LASTEXITCODE }
+  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:world --timeout $env:MOCHA_TIMEOUT; exit $LASTEXITCODE }
+  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:unit --timeout $env:MOCHA_TIMEOUT; exit $LASTEXITCODE }
+  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:integration --timeout $env:MOCHA_TIMEOUT; exit $LASTEXITCODE }
+  - pwsh: if ($env:BUILD_JOB -eq "scenarios") { yarn test:scenarios --timeout $env:MOCHA_TIMEOUT; exit $LASTEXITCODE }
 
 before_build:
   - pwsh: if ($env:BUILD_JOB -eq "build") { pwsh -NoProfile -ExecutionPolicy Unrestricted -Command .\build\windows\setup-keylocker.ps1 }
