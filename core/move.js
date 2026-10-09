@@ -2,7 +2,7 @@
  *
  *     const move = require('.../move')
  *     move(src, dst)
- *     move.child(src, dst)
+ *     move(src, dst, { child: true })
  *
  * @module core/move
  * @flow
@@ -19,15 +19,17 @@ import type { SideName } from './side'
 */
 
 module.exports = move
-move.child = child
 move.convertToDestinationAddition = convertToDestinationAddition
 
 // Modify the given src/dst docs so they can be merged then moved accordingly
 // during sync.
+// When `child` is true, the source is marked as a child move so it will be
+// moved with its ancestor, not by itself, during sync.
 function move(
   side /*: SideName */,
   src /*: SavedMetadata */,
-  dst /*: Metadata */
+  dst /*: Metadata */,
+  { child = false } /*: { child?: boolean } */ = {}
 ) {
   // Copy all fields from `src` that are not Sync action hints or PouchDB
   // attributes to `dst` if they're not already defined.
@@ -64,6 +66,9 @@ function move(
       ? src.moveFrom
       : src
   )
+  // Mark the snapshot that will be saved: Sync reads the flag on the saved
+  // doc's `moveFrom` (`move()` cloned it, so it is no longer `src`).
+  if (child) dst.moveFrom.childMove = true
   // TODO: remove `_id` and `_rev` from the exception list above and stop
   // assigning them manually.
   dst._id = src._id
@@ -74,19 +79,6 @@ function move(
   metadata.refreshRemoteMoveRev(dst)
 
   metadata.markSide(side, dst, src)
-}
-
-// Same as move() but mark the source as a child move so it will be moved with
-// its ancestor, not by itself, during sync.
-function child(
-  side /*: SideName */,
-  src /*: SavedMetadata */,
-  dst /*: Metadata */
-) {
-  move(side, src, dst)
-  // Mark the snapshot that will be saved: Sync reads the flag on the saved
-  // doc's `moveFrom` (`move()` cloned it, so it is no longer `src`).
-  if (dst.moveFrom) dst.moveFrom.childMove = true
 }
 
 function convertToDestinationAddition(

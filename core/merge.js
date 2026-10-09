@@ -797,7 +797,7 @@ class Merge {
           updateSide: side === singleSide
         })
       } else {
-        move.child(side, src, dst)
+        move(side, src, dst, { child: true })
       }
 
       this.updateChildIncompatibilities(dst)

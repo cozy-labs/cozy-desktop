@@ -57,7 +57,7 @@ describe('move', () => {
     should(dst.size).not.eql(src.size)
   })
 
-  describe('.child()', () => {
+  describe('with { child: true }', () => {
     it('ensures destination will be moved as part of its ancestor directory', async () => {
       const src = await builders
         .metadata()
@@ -66,7 +66,7 @@ describe('move', () => {
         .create()
       const dst = _.defaults({ path: 'whatever/dst' }, src)
 
-      move.child('local', src, dst)
+      move('local', src, dst, { child: true })
 
       should(dst)
         .have.propertyByPath('moveFrom', 'childMove')
