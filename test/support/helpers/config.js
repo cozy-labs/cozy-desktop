@@ -8,7 +8,12 @@ const PASSPHRASE = require('./passphrase')
 const config = require('../../../core/config')
 const { DEFAULT_SYNC_DIR_NAME } = require('../../../core/local/constants')
 const { findBasePath } = require('../../../core/migrations/configPaths')
-const automatedRegistration = require('../../../dev/remote/automated_registration')
+const { Registration } = require('../../../core/remote/registration')
+const {
+  automatedRegistration,
+  getSsoContext,
+  ssoDelegationCode
+} = require('../../../dev/remote/automated_registration')
 const pkg = require('../../../package.json')
 
 module.exports = {
@@ -51,6 +56,19 @@ module.exports = {
   },
 
   async registerOAuthClient() {
+    const ssoCtx = await getSsoContext(this.config.cozyUrl)
+    if (ssoCtx) {
+      // SSO instances cannot be registered through the native flow: go
+      // through the delegation code, like `dev/remote/generate-test-env.js`.
+      const { code, redirectURI } = await ssoDelegationCode(ssoCtx, PASSPHRASE)
+      const registration = new Registration(this.config.cozyUrl, this.config)
+      return registration.registerWithDelegationCode(
+        pkg,
+        code,
+        null,
+        redirectURI
+      )
+    }
     const registration = automatedRegistration(
       this.config.cozyUrl,
       PASSPHRASE,
