@@ -2,6 +2,19 @@ const macOSArch = process.arch
 
 const publishChannel = process.arch === 'arm64' ? 'latest-arm64' : 'latest'
 
+// Native modules ship prebuilt binaries for several platforms, but only the
+// ones built for the platform being packaged can ever be loaded: drop the
+// others from the package to avoid dead weight (and useless entries in the
+// Windows `verify-all.ps1` signature check).
+const prebuildsExclusions =
+  process.platform === 'win32'
+    ? [
+        '!node_modules/**/prebuilds/darwin-*/**',
+        '!node_modules/**/prebuilds/linux-*/**',
+        '!node_modules/**/prebuilds/android-*/**'
+      ]
+    : []
+
 const config = {
   appId: 'io.cozy.desktop',
   files: [
@@ -24,7 +37,8 @@ const config = {
     'gui/details.js',
     'gui/markdown-viewer.html',
     'gui/markdown-viewer.js',
-    'node_modules/cozy-ui/dist/*.css'
+    'node_modules/cozy-ui/dist/*.css',
+    ...prebuildsExclusions
   ],
   forceCodeSigning: true,
   afterPack: './build/afterPackHook.js',
@@ -83,7 +97,10 @@ const config = {
     // Electron-Builder will then swtich back to the default Comodoca server.
     rfc3161TimeStampServer: 'http://timestamp.digicert.com',
     sign: 'build/windows/customSign.js',
-    signDlls: true,
+    // Sign every native module (`.node`) as well as DLLs: Windows Smart App
+    // Control blocks unsigned binaries when loading them (upstream issue
+    // electron-userland/electron-builder#7329).
+    signExts: ['.dll', '.node'],
     signingHashAlgorithms: ['sha256']
   },
 
