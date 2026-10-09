@@ -59,11 +59,19 @@ app
     if (await isSsoInstance(cozyUrl)) {
       // eslint-disable-next-line no-console
       console.log('SSO instance detected, registering via delegation code...')
-      const { code, fqdn } = await ssoDelegationCode(cozyUrl, passphrase)
+      const { code, fqdn, redirectURI } = await ssoDelegationCode(
+        cozyUrl,
+        passphrase
+      )
       // eslint-disable-next-line no-console
       console.log(`Delegation code obtained for ${fqdn}, registering client...`)
       const registration = new Registration(cozyUrl, storage)
-      return registration.registerWithDelegationCode(pkg, code)
+      return registration.registerWithDelegationCode(
+        pkg,
+        code,
+        null,
+        redirectURI
+      )
     }
     return automatedRegistration(cozyUrl, passphrase, storage).process(pkg)
   })

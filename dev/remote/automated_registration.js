@@ -9,8 +9,12 @@ const url = require('url')
 
 const cheerio = require('cheerio')
 
-const { Registration } = require('../../core/remote/registration')
+const {
+  Registration,
+  waitForOIDCCallback
+} = require('../../core/remote/registration')
 const { logger } = require('../../core/utils/logger')
+const { oidcLoginURL } = require('../../core/utils/twake')
 
 const log = logger({
   component: 'remote/automated_registration'
@@ -195,16 +199,8 @@ const authorize = async authorizeUrl => {
 
 // The SSO governing the Twake Workplace instances
 const SSO_BASE_URL = 'https://sign-up.twake.app'
-// The manager (cloudery) brokering the OIDC delegation to the instances.
-const MANAGER_BASE_URL = 'https://manager.cozycloud.cc'
 // Salt prefix used by the SSO to derive the passphrase hash.
 const SSO_SALT_PREFIX = 'me@'
-/* The URL scheme the desktop app registers to receive the delegation
- * deeplink. We only need to read the redirect target, not to follow it.
- */
-const DEEPLINK_SCHEME = 'cozy:'
-// The route of the manager handing out OIDC login URLs for Twake Workplace.
-const MANAGER_OIDC_ROUTE = 'twake_prod'
 const USER_AGENT = 'Mozilla/5.0'
 
 /* Collect the cookies set by a response, keyed by host, session cookies
@@ -255,17 +251,23 @@ const isSsoInstance = async (
  *    passphrase hashed the way the SSO web app does (PBKDF2-SHA256 with
  *    `me@<domain>` as salt, then PBKDF2-SHA256 with the passphrase itself
  *    as salt, i.e. the same derivation as `_hashPassphrase`),
- * 2. follow the delegation chain from the manager down to the `cozy://`
- *    deeplink carrying the delegation code and the instance FQDN.
+ * 2. follow the delegation chain from the manager down to the local
+ *    callback server started for that purpose, like the desktop app does,
+ *    carrying the delegation code and the instance FQDN.
  *
  * The returned code is meant to be exchanged by
  * `Registration.registerWithDelegationCode()`, which registers a fresh
  * OAuth client on the instance and trades the code for an access token.
  */
-const ssoDelegationCode = async (
+const _ssoDelegationCode = async (
+  waiter /*: {
+    callbackURL: string,
+    params: Promise<URLSearchParams>,
+    close: () => void
+  } */,
   cozyBaseUrl /*: string */,
   passphrase /*: string */
-) /*: Promise<{ code: string, fqdn: string }> */ => {
+) /*: Promise<{ code: string, fqdn: string, redirectURI: string }> */ => {
   const login = new url.URL(cozyBaseUrl).host
 
   log.debug('Get SSO auth context...')
@@ -343,7 +345,10 @@ const ssoDelegationCode = async (
   }
 
   log.debug('Follow the SSO delegation chain...')
-  let next = `${MANAGER_BASE_URL}/linagora/${MANAGER_OIDC_ROUTE}?redirect_after_oidc=${DEEPLINK_SCHEME}//`
+  const callbackURL = new url.URL(waiter.callbackURL)
+  let next = `${oidcLoginURL()}?redirect_after_oidc=${encodeURIComponent(
+    waiter.callbackURL
+  )}`
   for (let hop = 0; hop < 6; hop++) {
     const target = new url.URL(next)
     const res = await fetch(next, {
@@ -362,21 +367,52 @@ const ssoDelegationCode = async (
       )
     }
     const dest = new url.URL(location, next)
-    if (dest.protocol === DEEPLINK_SCHEME) {
-      const code = dest.searchParams.get('code')
-      const fqdn = dest.searchParams.get('fqdn')
-      if (!code || !fqdn) {
+    if (
+      dest.protocol === callbackURL.protocol &&
+      dest.host === callbackURL.host
+    ) {
+      // The chain landed on our local callback server: serve the request,
+      // which resolves the waiter with the delegation params, like in the
+      // desktop app onboarding.
+      const callbackRes = await fetch(dest.toString(), ssoFetchOptions)
+      await callbackRes.text()
+      if (callbackRes.status !== 200) {
         throw new Error(
-          `SSO delegation deeplink is missing code or fqdn:\n  ${dest.toString()}`
+          `OIDC callback request failed (code ${
+            callbackRes.status
+          }):\n  ${dest.toString()}`
         )
       }
-      return { code, fqdn }
+      const callbackParams = await waiter.params
+      const code = callbackParams.get('code')
+      const fqdn = callbackParams.get('fqdn')
+      if (!code || !fqdn) {
+        throw new Error(
+          `OIDC callback is missing code or fqdn:\n  ${dest.toString()}`
+        )
+      }
+      return { code, fqdn, redirectURI: waiter.callbackURL }
     }
     next = dest.toString()
   }
   throw new Error(
-    'SSO delegation chain did not reach the deeplink (too many hops)'
+    'SSO delegation chain did not reach the local callback (too many hops)'
   )
+}
+
+/* Resolve with the SSO delegation code, instance FQDN and the local
+ * callback URL, closing the callback server whatever the outcome.
+ */
+const ssoDelegationCode = async (
+  cozyBaseUrl /*: string */,
+  passphrase /*: string */
+) => {
+  const waiter = await waitForOIDCCallback()
+  try {
+    return await _ssoDelegationCode(waiter, cozyBaseUrl, passphrase)
+  } finally {
+    waiter.close()
+  }
 }
 
 // An automated Registration instance using the cozy-stack Web interface
