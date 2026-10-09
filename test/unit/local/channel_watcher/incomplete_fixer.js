@@ -22,7 +22,27 @@ const checksumer = {
   kill: sinon.stub()
 }
 
-const completedEvent = event => _.omit(event, ['incompleteFixer'])
+/** The atime of a file can change between the moment the incomplete fixer
+ * stats it and the moment we stat it again for comparison purposes (e.g. when
+ * the file gets read in between), so we ignore it when comparing stats.
+ */
+const withoutAtime = stats =>
+  stats ? _.omit({ ...stats }, ['atime', 'atimeMs']) : stats
+const statsAt = async absPath => withoutAtime(await stater.stat(absPath))
+
+/** Strip the atime of every event's stats, keeping everything else (unlike
+ * completionChanges, which also drops the incompleteFixer metadata).
+ */
+const withoutAtimes = events =>
+  events.map(event =>
+    event.stats ? { ...event, stats: withoutAtime(event.stats) } : event
+  )
+
+const completedEvent = event => {
+  const completed = _.omit(event, ['incompleteFixer'])
+  if (completed.stats) completed.stats = withoutAtime(completed.stats)
+  return completed
+}
 const completionChanges = events => events.map(completedEvent)
 
 onPlatforms(['linux', 'win32'], () => {
@@ -71,11 +91,13 @@ onPlatforms(['linux', 'win32'], () => {
         inputChannel.push([createdEvent])
         inputChannel.push([renamedEvent])
 
-        should(await outputChannel.pop()).deepEqual(
-          await incompleteFixer.step(
-            { incompletes: [{ event: createdEvent, timestamp: Date.now() }] },
-            opts
-          )([renamedEvent])
+        should(withoutAtimes(await outputChannel.pop())).deepEqual(
+          withoutAtimes(
+            await incompleteFixer.step(
+              { incompletes: [{ event: createdEvent, timestamp: Date.now() }] },
+              opts
+            )([renamedEvent])
+          )
         )
       })
     })
@@ -215,37 +237,37 @@ onPlatforms(['linux', 'win32'], () => {
 
           should(outputBatches).deepEqual([
             [],
-            [
+            withoutAtimes([
               renamedEvent,
               {
                 path: path.normalize('dst/foo1'),
                 kind: 'file',
                 action: 'created',
                 md5sum: CHECKSUM,
-                stats: await stater.stat(path.join(config.syncPath, 'dst/foo1'))
+                stats: await statsAt(path.join(config.syncPath, 'dst/foo1'))
               },
               {
                 path: path.normalize('dst/foo2'),
                 kind: 'file',
                 action: 'modified',
                 md5sum: CHECKSUM,
-                stats: await stater.stat(path.join(config.syncPath, 'dst/foo2'))
+                stats: await statsAt(path.join(config.syncPath, 'dst/foo2'))
               },
               {
                 path: path.normalize('dst/foo3'),
                 kind: 'file',
                 action: 'deleted',
                 md5sum: CHECKSUM,
-                stats: await stater.stat(path.join(config.syncPath, 'dst/foo3'))
+                stats: await statsAt(path.join(config.syncPath, 'dst/foo3'))
               },
               {
                 path: path.normalize('dst/foo5'),
                 kind: 'file',
                 action: 'scan',
                 md5sum: CHECKSUM,
-                stats: await stater.stat(path.join(config.syncPath, 'dst/foo5'))
+                stats: await statsAt(path.join(config.syncPath, 'dst/foo5'))
               }
-            ]
+            ])
           ])
         })
 
@@ -303,7 +325,7 @@ onPlatforms(['linux', 'win32'], () => {
             {
               path: renamedEvent.path,
               md5sum: CHECKSUM,
-              stats: await stater.stat(
+              stats: await statsAt(
                 path.join(config.syncPath, renamedEvent.path)
               ),
               action: createdEvent.action,
@@ -383,7 +405,7 @@ onPlatforms(['linux', 'win32'], () => {
             .oldPath(dst1)
             .path(dst2)
             .build()
-          const stats = await stater.stat(path.join(config.syncPath, dst2))
+          const stats = await statsAt(path.join(config.syncPath, dst2))
           secondRenamedEvent.stats = stats
 
           const incompletes = []
@@ -397,7 +419,7 @@ onPlatforms(['linux', 'win32'], () => {
               { incompletes },
               opts
             )(inputBatch)
-            outputBatches.push(outputBatch)
+            outputBatches.push(withoutAtimes(outputBatch))
           }
 
           should(outputBatches).deepEqual([
@@ -477,7 +499,7 @@ onPlatforms(['linux', 'win32'], () => {
                 md5sum: CHECKSUM,
                 oldPath: src,
                 path: dst3,
-                stats: await stater.stat(path.join(config.syncPath, dst3))
+                stats: await statsAt(path.join(config.syncPath, dst3))
               }
             ]
           ])
@@ -671,12 +693,12 @@ onPlatforms(['linux', 'win32'], () => {
               { incompletes },
               opts
             )(inputBatch)
-            outputBatches.push(outputBatch)
+            outputBatches.push(withoutAtimes(outputBatch))
           }
 
           should(outputBatches).deepEqual([
             [],
-            [
+            withoutAtimes([
               renamedEvent,
               {
                 action: 'modified',
@@ -687,9 +709,9 @@ onPlatforms(['linux', 'win32'], () => {
                 kind: 'file',
                 md5sum: CHECKSUM,
                 path: dst,
-                stats: await stater.stat(path.join(config.syncPath, dst))
+                stats: await statsAt(path.join(config.syncPath, dst))
               }
-            ]
+            ])
           ])
         })
       })
@@ -745,7 +767,7 @@ onPlatforms(['linux', 'win32'], () => {
               { incompletes },
               opts
             )(inputBatch)
-            outputBatches.push(outputBatch)
+            outputBatches.push(withoutAtimes(outputBatch))
           }
 
           should(outputBatches).deepEqual([
@@ -762,7 +784,7 @@ onPlatforms(['linux', 'win32'], () => {
                 md5sum: CHECKSUM,
                 oldPath: src,
                 path: dst2,
-                stats: await stater.stat(path.join(config.syncPath, dst2))
+                stats: await statsAt(path.join(config.syncPath, dst2))
               },
               {
                 action: 'modified',
@@ -781,7 +803,7 @@ onPlatforms(['linux', 'win32'], () => {
                 kind: 'file',
                 md5sum: CHECKSUM,
                 path: dst2,
-                stats: await stater.stat(path.join(config.syncPath, dst2))
+                stats: await statsAt(path.join(config.syncPath, dst2))
               }
             ]
           ])
