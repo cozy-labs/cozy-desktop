@@ -4,10 +4,10 @@ const fse = require('fs-extra')
 
 const {
   automatedRegistration,
-  isSsoInstance,
+  getSsoContext,
   ssoDelegationCode
 } = require('./automated_registration')
-const Registration = require('../../core/remote/registration')
+const { Registration } = require('../../core/remote/registration')
 const network = require('../../gui/js/network')
 const pkg = require('../../package.json')
 
@@ -56,11 +56,14 @@ app
   })
   .then(() => network.setup({}, session, ''))
   .then(async () => {
-    if (await isSsoInstance(cozyUrl)) {
+    const ssoCtx = await getSsoContext(cozyUrl)
+    if (ssoCtx) {
       // eslint-disable-next-line no-console
-      console.log('SSO instance detected, registering via delegation code...')
+      console.log(
+        `SSO instance detected (${ssoCtx.ssoBase}), registering via delegation code...`
+      )
       const { code, fqdn, redirectURI } = await ssoDelegationCode(
-        cozyUrl,
+        ssoCtx,
         passphrase
       )
       // eslint-disable-next-line no-console

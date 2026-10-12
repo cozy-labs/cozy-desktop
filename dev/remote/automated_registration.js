@@ -9,10 +9,7 @@ const url = require('url')
 
 const cheerio = require('cheerio')
 
-const {
-  Registration,
-  waitForOIDCCallback
-} = require('../../core/remote/registration')
+const { Registration } = require('../../core/remote/registration')
 const { logger } = require('../../core/utils/logger')
 const { oidcLoginURL } = require('../../core/utils/twake')
 
@@ -197,8 +194,6 @@ const authorize = async authorizeUrl => {
   }
 }
 
-// The SSO governing the Twake Workplace instances
-const SSO_BASE_URL = 'https://sign-up.twake.app'
 // Salt prefix used by the SSO to derive the passphrase hash.
 const SSO_SALT_PREFIX = 'me@'
 const USER_AGENT = 'Mozilla/5.0'
@@ -230,56 +225,77 @@ const _addCookies = (
   ]
 }
 
-/* Detect whether the instance is behind an OIDC SSO.
+/* Discover the SSO context for the instance at `cozyBaseUrl`.
  *
- * The login page of such an instance redirects to an external host (the
- * SSO), while a native instance serves its own login form.
+ * The login page of an SSO-governed instance redirects to an external OAuth
+ * authorize URL carrying everything needed to continue the flow: the SSO
+ * origin, the user's login hint and the redirect URI waiting for the
+ * delegation code. A native instance serves its own login form instead.
+ *
+ * Resolves with `{ ssoBase, login, authorizeURL, redirectURI }` when the
+ * instance is behind an SSO, `null` otherwise.
  */
-const isSsoInstance = async (
+const getSsoContext = async (
   cozyBaseUrl /*: string */
-) /*: Promise<boolean> */ => {
+) /*: Promise<?{ ssoBase: string, login: string, authorizeURL: url.URL, redirectURI: string }> */ => {
   const loginUrl = new url.URL('/auth/login', cozyBaseUrl).toString()
-  const { redirectHost } = await _fetchLoginPage(loginUrl)
-  return redirectHost !== null
+  const { redirectHost, finalUrl } = await _fetchLoginPage(loginUrl)
+  if (!redirectHost) return null
+
+  const authorizeURL = new url.URL(finalUrl)
+  // An SSO authorize URL without `redirect_uri` cannot continue the flow.
+  const redirectURI = authorizeURL.searchParams.get('redirect_uri')
+  if (!redirectURI) {
+    throw new Error('SSO authorize URL is missing a redirect_uri parameter')
+  }
+  return {
+    ssoBase: authorizeURL.origin,
+    login:
+      authorizeURL.searchParams.get('login_hint') ||
+      new url.URL(cozyBaseUrl).host,
+    authorizeURL,
+    redirectURI
+  }
 }
 
 /* Resolve with the SSO delegation `code` and instance `fqdn` for the
- * instance at `cozyBaseUrl`.
+ * context discovered by `getSsoContext()`.
  *
  * Simulates headlessly the browser flow of the desktop app onboarding:
- * 1. authenticate against the SSO with the instance FQDN as login and the
- *    passphrase hashed the way the SSO web app does (PBKDF2-SHA256 with
- *    `me@<domain>` as salt, then PBKDF2-SHA256 with the passphrase itself
- *    as salt, i.e. the same derivation as `_hashPassphrase`),
+ * 1. authenticate against the SSO with the login hint discovered from the
+ *    instance and the passphrase hashed the way the SSO web app does
+ *    (PBKDF2-SHA256 with `me@<domain>` as salt, then PBKDF2-SHA256 with the
+ *    passphrase itself as salt, i.e. the same derivation as
+ *    `_hashPassphrase`),
  * 2. follow the delegation chain from the manager down to the local
- *    callback server started for that purpose, like the desktop app does,
- *    carrying the delegation code and the instance FQDN.
+ *    callback URL, carrying the delegated code and the instance FQDN.
  *
  * The returned code is meant to be exchanged by
  * `Registration.registerWithDelegationCode()`, which registers a fresh
  * OAuth client on the instance and trades the code for an access token.
  */
 const _ssoDelegationCode = async (
-  waiter /*: {
-    callbackURL: string,
-    params: Promise<URLSearchParams>,
-    close: () => void
+  ctx /*: {
+    ssoBase: string,
+    login: string,
+    authorizeURL: url.URL,
+    redirectURI: string
   } */,
-  cozyBaseUrl /*: string */,
   passphrase /*: string */
 ) /*: Promise<{ code: string, fqdn: string, redirectURI: string }> */ => {
-  const login = new url.URL(cozyBaseUrl).host
+  const { ssoBase, login } = ctx
+  const ssoHost = new url.URL(ssoBase).host
 
   log.debug('Get SSO auth context...')
   // `useElectronNet: false` forces electron-fetch's Node.js code path:
   // under Electron's net stack, redirects are followed internally and the
-  // `redirect: 'manual'` option is ignored, which the delegation chain
-  // below cannot work with.
+  // `redirect: 'manual'` option is ignored, which the code capture below
+  // cannot work with.
   const ssoFetchOptions /*: any */ = { useElectronNet: false }
-  const ctxRes = await fetch(`${SSO_BASE_URL}/api/auth-context`, {
+  const ctxRes = await fetch(`${ssoBase}/api/auth-context`, {
     ...ssoFetchOptions,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: SSO_BASE_URL },
+    headers: { 'Content-Type': 'application/json', Origin: ssoBase },
     body: JSON.stringify({ login })
   })
   if (!ctxRes.ok) {
@@ -298,13 +314,13 @@ const _ssoDelegationCode = async (
   }
 
   log.debug('Load SSO login page...')
-  const page = await fetch(`${SSO_BASE_URL}/`, {
+  const page = await fetch(`${ssoBase}/`, {
     ...ssoFetchOptions,
     headers: { 'User-Agent': USER_AGENT }
   })
   await page.text()
   const jar = {}
-  _addCookies(jar, 'sign-up.twake.app', page.headers)
+  _addCookies(jar, ssoHost, page.headers)
 
   log.debug('Login to the SSO...')
   const hashed = await _hashPassphrase(
@@ -312,18 +328,19 @@ const _ssoDelegationCode = async (
     `${SSO_SALT_PREFIX}${domain}`,
     iterations
   )
-  const loginRes = await fetch(`${SSO_BASE_URL}/?/login`, {
+  const loginRes = await fetch(`${ssoBase}/?/login`, {
     ...ssoFetchOptions,
     method: 'POST',
     headers: {
-      Origin: SSO_BASE_URL,
+      Origin: ssoBase,
+      'Content-Type': 'application/x-www-form-urlencoded',
       'x-sveltekit-action': 'true',
-      Cookie: jar['sign-up.twake.app'].join('; '),
+      Cookie: jar[ssoHost].join('; '),
       'User-Agent': USER_AGENT
     },
     body: formBody({ login, password: hashed })
   })
-  _addCookies(jar, 'sign-up.twake.app', loginRes.headers)
+  _addCookies(jar, ssoHost, loginRes.headers)
   const loginBody = await loginRes.text()
   let loginResult
   try {
@@ -344,10 +361,18 @@ const _ssoDelegationCode = async (
     )
   }
 
-  log.debug('Follow the SSO delegation chain...')
-  const callbackURL = new url.URL(waiter.callbackURL)
+  // The delegated code is minted by the cozy-stack through its admin
+  // endpoint, which only the cloudery (manager) can call. The OAuth code
+  // issued by the SSO itself is refused by `/oidc/access_token`, so the
+  // delegation must go through the manager: it authenticates the user via
+  // the SSO session established above, then redirects to the local callback
+  // with the delegated code and the instance FQDN.
+  log.debug('Follow the manager delegation chain...')
+  const callbackURL = `http://127.0.0.1:3344/callback?state=${crypto
+    .randomBytes(16)
+    .toString('hex')}`
   let next = `${oidcLoginURL()}?redirect_after_oidc=${encodeURIComponent(
-    waiter.callbackURL
+    callbackURL
   )}`
   for (let hop = 0; hop < 6; hop++) {
     const target = new url.URL(next)
@@ -367,31 +392,17 @@ const _ssoDelegationCode = async (
       )
     }
     const dest = new url.URL(location, next)
-    if (
-      dest.protocol === callbackURL.protocol &&
-      dest.host === callbackURL.host
-    ) {
-      // The chain landed on our local callback server: serve the request,
-      // which resolves the waiter with the delegation params, like in the
-      // desktop app onboarding.
-      const callbackRes = await fetch(dest.toString(), ssoFetchOptions)
-      await callbackRes.text()
-      if (callbackRes.status !== 200) {
-        throw new Error(
-          `OIDC callback request failed (code ${
-            callbackRes.status
-          }):\n  ${dest.toString()}`
-        )
-      }
-      const callbackParams = await waiter.params
-      const code = callbackParams.get('code')
-      const fqdn = callbackParams.get('fqdn')
+    if (dest.host === new url.URL(callbackURL).host) {
+      // Capture the delegated code from the redirect without following it:
+      // nothing needs to listen on the callback URL.
+      const code = dest.searchParams.get('code')
+      const fqdn = dest.searchParams.get('fqdn')
       if (!code || !fqdn) {
         throw new Error(
           `OIDC callback is missing code or fqdn:\n  ${dest.toString()}`
         )
       }
-      return { code, fqdn, redirectURI: waiter.callbackURL }
+      return { code, fqdn, redirectURI: callbackURL }
     }
     next = dest.toString()
   }
@@ -400,19 +411,19 @@ const _ssoDelegationCode = async (
   )
 }
 
-/* Resolve with the SSO delegation code, instance FQDN and the local
- * callback URL, closing the callback server whatever the outcome.
+/* Resolve with the SSO delegation code and the instance redirect URI.
+ *
+ * - `ctx` is the one provided by `getSsoContext()`, or `null` when the
+ *   instance is not behind an SSO.
  */
 const ssoDelegationCode = async (
-  cozyBaseUrl /*: string */,
+  ctx /*: ?{ ssoBase: string, login: string, authorizeURL: url.URL, redirectURI: string } */,
   passphrase /*: string */
-) => {
-  const waiter = await waitForOIDCCallback()
-  try {
-    return await _ssoDelegationCode(waiter, cozyBaseUrl, passphrase)
-  } finally {
-    waiter.close()
+) /*: Promise<{ code: string, redirectURI: string }> */ => {
+  if (!ctx) {
+    throw new Error('Instance is not behind an SSO: no delegation context')
   }
+  return _ssoDelegationCode(ctx, passphrase)
 }
 
 // An automated Registration instance using the cozy-stack Web interface
@@ -434,4 +445,4 @@ const automatedRegistration = (
   })
 }
 
-module.exports = { automatedRegistration, isSsoInstance, ssoDelegationCode }
+module.exports = { automatedRegistration, getSsoContext, ssoDelegationCode }
