@@ -2,7 +2,7 @@
  *
  *     const move = require('.../move')
  *     move(src, dst)
- *     move.child(src, dst)
+ *     move(src, dst, { child: true })
  *
  * @module core/move
  * @flow
@@ -19,15 +19,17 @@ import type { SideName } from './side'
 */
 
 module.exports = move
-move.child = child
 move.convertToDestinationAddition = convertToDestinationAddition
 
 // Modify the given src/dst docs so they can be merged then moved accordingly
 // during sync.
+// When `child` is true, the source is marked as a child move so it will be
+// moved with its ancestor, not by itself, during sync.
 function move(
   side /*: SideName */,
   src /*: SavedMetadata */,
-  dst /*: Metadata */
+  dst /*: Metadata */,
+  { child = false } /*: { child?: boolean } */ = {}
 ) {
   // Copy all fields from `src` that are not Sync action hints or PouchDB
   // attributes to `dst` if they're not already defined.
@@ -54,29 +56,29 @@ function move(
   // We don't chain for child moves: their `moveFrom` is the original path
   // before the parent move, which the parent's sync will relocate. Chaining
   // would point at a path the parent move will have already moved away.
-  dst.moveFrom =
+  // Clone the resulting snapshot: callers keep using `src` after the merge
+  // (e.g. `child()` marks it, Sync reads its sides) and must not see the
+  // snapshot's later mutations (rev refresh, `childMove` marking).
+  dst.moveFrom = _.cloneDeep(
     src.moveFrom &&
-    !src.moveFrom.childMove &&
-    !metadata.isAtLeastUpToDate('local', src)
+      !src.moveFrom.childMove &&
+      !metadata.isAtLeastUpToDate('local', src)
       ? src.moveFrom
       : src
+  )
+  // Mark the snapshot that will be saved: Sync reads the flag on the saved
+  // doc's `moveFrom` (`move()` cloned it, so it is no longer `src`).
+  if (child) dst.moveFrom.childMove = true
   // TODO: remove `_id` and `_rev` from the exception list above and stop
   // assigning them manually.
   dst._id = src._id
   dst._rev = src._rev
 
-  metadata.markSide(side, dst, src)
-}
+  // When the move was merged from a remote change, its revision is fresher
+  // than the source record's one and must be propagated to the move snapshot.
+  metadata.refreshRemoteMoveRev(dst)
 
-// Same as move() but mark the source as a child move so it will be moved with
-// its ancestor, not by itself, during sync.
-function child(
-  side /*: SideName */,
-  src /*: SavedMetadata */,
-  dst /*: Metadata */
-) {
-  move(side, src, dst)
-  src.childMove = true
+  metadata.markSide(side, dst, src)
 }
 
 function convertToDestinationAddition(

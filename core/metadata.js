@@ -953,9 +953,13 @@ function updateRemote(
   newRemote /*: {| path: string |}|CouchDBDoc|FullRemoteFile|RemoteDir */
 ) {
   doc.remote = _.defaultsDeep(
-    {
-      path: pathUtils.localToRemote(newRemote.path) // Works also if newRmote.path is formated as a remote path
-    },
+    // `newRemote` may lack a path (e.g. a move change with only the new
+    // revision) and `doc.remote` already holds a valid one in that case.
+    newRemote.path != null
+      ? {
+          path: pathUtils.localToRemote(newRemote.path) // Works also if newRmote.path is formated as a remote path
+        }
+      : {},
     newRemote.created_at != null
       ? {
           created_at: timestamp.roundedRemoteDate(newRemote.created_at)
@@ -969,6 +973,27 @@ function updateRemote(
     _.cloneDeep(newRemote),
     _.cloneDeep(doc.remote)
   )
+
+  refreshRemoteMoveRev(doc)
+}
+
+// `doc.moveFrom.remote` snapshots the remote state of the moved document when
+// its move was merged. It refers to the same remote document as `doc.remote`
+// but, unlike it, is not refreshed by all remote merges. Keep its revision in
+// sync with the freshest of the two, else Sync would send an outdated revision
+// in the `If-Match` header of its move request and it would be rejected with a
+// 412 Precondition Failed although the move is still valid.
+function refreshRemoteMoveRev(doc /*: Metadata */) /*: void */ {
+  const { moveFrom } = doc
+  if (
+    doc.remote &&
+    moveFrom &&
+    moveFrom.remote &&
+    doc.remote._id === moveFrom.remote._id &&
+    extractRevNumber(doc.remote) > extractRevNumber(moveFrom.remote)
+  ) {
+    moveFrom.remote._rev = doc.remote._rev
+  }
 }
 
 module.exports = {
@@ -1023,5 +1048,6 @@ module.exports = {
   shouldIgnore,
   serializableRemote,
   updateLocal,
-  updateRemote
+  updateRemote,
+  refreshRemoteMoveRev
 }

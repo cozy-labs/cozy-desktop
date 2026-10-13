@@ -1722,6 +1722,96 @@ describe('metadata', function() {
         cozyMetadata: file.remote.cozyMetadata
       })
     })
+
+    it('refreshes the revision of the move snapshot', function() {
+      // `core/remote` relies on `updateRemote` refreshing the move snapshot
+      // on every remote revision change.
+      const was = builders
+        .metafile()
+        .path('src')
+        .upToDate()
+        .build()
+      const doc = builders
+        .metafile()
+        .moveFrom(was)
+        .path('dst')
+        .remoteId(was.remote._id)
+        .remoteRev(2)
+        .build()
+
+      metadata.updateRemote(doc, doc.remote)
+
+      should(_.get(doc, 'moveFrom.remote._rev')).equal(
+        _.get(doc, 'remote._rev')
+      )
+    })
+  })
+
+  describe('refreshRemoteMoveRev', () => {
+    it('refreshes the revision of the move snapshot when the remote one is fresher', function() {
+      // `doc.moveFrom.remote` snapshots the remote state of the moved
+      // document when its move was merged and is not refreshed by all remote
+      // merges. If it lagged behind `doc.remote`, Sync would send an outdated
+      // revision in the `If-Match` header of its move request and it would
+      // be rejected with a 412 Precondition Failed.
+      const was = builders
+        .metafile()
+        .path('src')
+        .upToDate()
+        .build()
+      const doc = builders
+        .metafile()
+        .moveFrom(was)
+        .path('dst')
+        .remoteId(was.remote._id)
+        .remoteRev(2)
+        .build()
+
+      metadata.refreshRemoteMoveRev(doc)
+
+      should(_.get(doc, 'moveFrom.remote._rev')).equal(
+        _.get(doc, 'remote._rev')
+      )
+    })
+
+    it('does not refresh the move snapshot of another remote document', function() {
+      const was = builders
+        .metafile()
+        .path('src')
+        .upToDate()
+        .build()
+      const doc = builders
+        .metafile()
+        .moveFrom(was)
+        .path('dst')
+        .remoteId('other-remote-id')
+        .remoteRev(2)
+        .build()
+
+      metadata.refreshRemoteMoveRev(doc)
+
+      should(_.get(doc, 'moveFrom.remote._rev')).equal(was.remote._rev)
+    })
+
+    it('does not downgrade the revision of the move snapshot', function() {
+      const was = builders
+        .metafile()
+        .path('src')
+        .upToDate()
+        .remoteRev(2)
+        .build()
+      const doc = builders
+        .metafile()
+        .moveFrom(was)
+        .path('dst')
+        .remoteId(was.remote._id)
+        .remoteRev(1)
+        .build()
+
+      metadata.refreshRemoteMoveRev(doc)
+
+      should(_.get(doc, 'moveFrom.remote._rev')).equal(was.remote._rev)
+    })
   })
 
   describe('comparators', function() {
