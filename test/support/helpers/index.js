@@ -15,6 +15,7 @@ const { Ignore } = require('../../../core/ignore')
 const { Merge } = require('../../../core/merge')
 const { FOLDER } = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
+const { REMOTE_WATCHER_ERROR_EVENT } = require('../../../core/remote/constants')
 const { Sync } = require('../../../core/sync')
 const { SyncState } = require('../../../core/syncstate')
 
@@ -74,10 +75,26 @@ class TestHelpers {
   }
 
   async clean() {
+    // The pouch is destroyed right after clean() by the cleanDatabase
+    // afterEach: stop the sync's timers and watchers now, while the pouch is
+    // still alive, so no retry tick or in-flight watch() keeps running
+    // against a destroyed pouch (there, a lost leveldown callback wedges the
+    // watcher queue and can stall the following tests).
+    // Removing the error listeners prevents an in-flight watch() from
+    // re-arming the retry interval through Sync.blockSyncFor.
+    this.events.removeAllListeners(REMOTE_WATCHER_ERROR_EVENT)
+    clearInterval(this._sync.retryInterval)
+    this._sync.retryInterval = null
+    await this._remote.stop()
+    await this._local.stop()
     return Promise.all([this.local.clean(), this.remote.clean()])
   }
 
   async stop() {
+    // A test can end with changes still blocked: its retry interval must not
+    // keep firing against a pouch that is about to be destroyed.
+    clearInterval(this._sync.retryInterval)
+    this._sync.retryInterval = null
     await this._remote.stop()
     await this._local.stop()
   }
