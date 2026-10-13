@@ -4440,7 +4440,7 @@ describe('Merge', function() {
 
         const savedChild = _.find(
           sideEffects.savedDocs,
-          saved => saved.path === 'MOVED_DIR/moved-child'
+          saved => saved.path === path.join('MOVED_DIR', 'moved-child')
         )
 
         // The child's pending move is chained to the parent's one: Sync must
