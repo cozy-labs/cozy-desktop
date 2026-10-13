@@ -1,5 +1,32 @@
 # Twake Desktop: Changelog
 
+## 5.6.0-beta.4 - 2026-10-13
+
+Improvements for all users:
+
+- Completing the sign-in during onboarding relied on a custom protocol to bring
+  the sign-in result back to the application, which could fail depending on the
+  browser or the operating system.
+  The sign-in result is now received by a local server started by the
+  application, and the browser displays a confirmation page that closes itself
+  after a few seconds.
+- When the response to a file or folder move was lost, for instance during a
+  network change, the move could have been applied anyway while the retries kept
+  failing, leaving a blocking synchronization alert although the file was
+  already moved on both sides.
+  The retries now use the up-to-date remote revision and the alert is removed
+  once the move is confirmed.
+
+Improvements for Windows users:
+
+- On Windows 11 with Smart App Control enabled, the application could crash at
+  startup because native modules were shipped unsigned.
+  Native modules are now signed along with the rest of the application.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.6.0-beta.3 - 2026-10-05
 
 Improvements for all users:
