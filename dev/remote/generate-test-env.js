@@ -2,7 +2,12 @@ require('../../core/globals')
 const { app, session } = require('electron')
 const fse = require('fs-extra')
 
-const automatedRegistration = require('./automated_registration')
+const {
+  automatedRegistration,
+  getSsoContext,
+  ssoDelegationCode
+} = require('./automated_registration')
+const { Registration } = require('../../core/remote/registration')
 const network = require('../../gui/js/network')
 const pkg = require('../../package.json')
 
@@ -50,7 +55,29 @@ app
     return syncSession.clearStorageData()
   })
   .then(() => network.setup({}, session, ''))
-  .then(() => automatedRegistration(cozyUrl, passphrase, storage).process(pkg))
+  .then(async () => {
+    const ssoCtx = await getSsoContext(cozyUrl)
+    if (ssoCtx) {
+      // eslint-disable-next-line no-console
+      console.log(
+        `SSO instance detected (${ssoCtx.ssoBase}), registering via delegation code...`
+      )
+      const { code, fqdn, redirectURI } = await ssoDelegationCode(
+        ssoCtx,
+        passphrase
+      )
+      // eslint-disable-next-line no-console
+      console.log(`Delegation code obtained for ${fqdn}, registering client...`)
+      const registration = new Registration(cozyUrl, storage)
+      return registration.registerWithDelegationCode(
+        pkg,
+        code,
+        null,
+        redirectURI
+      )
+    }
+    return automatedRegistration(cozyUrl, passphrase, storage).process(pkg)
+  })
   .then(readAccessToken)
   .then(generateTestEnv)
   .then(() => {
