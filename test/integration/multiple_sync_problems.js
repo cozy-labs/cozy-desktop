@@ -1,6 +1,8 @@
 /* @flow */
 /* eslint-env mocha */
 
+const path = require('path')
+
 const should = require('should')
 const sinon = require('sinon')
 
@@ -208,10 +210,12 @@ describe('Multiple sync problems', () => {
 
       const parentDoc = await helpers.pouch.bySyncedPath('non-fatal-parent')
       should(parentDoc.skipped).equal(remoteErrors.CONFLICTING_NAME_CODE)
-      should(alertPaths).not.containEql('non-fatal-parent/child')
+      should(alertPaths).not.containEql(
+        path.normalize('non-fatal-parent/child')
+      )
 
       const childDoc = await helpers.pouch.bySyncedPath(
-        'non-fatal-parent/child'
+        path.normalize('non-fatal-parent/child')
       )
       should(childDoc.skipped).be.undefined()
 
@@ -241,7 +245,10 @@ describe('Multiple sync problems', () => {
       sinon
         .stub(helpers.remote.side, 'addFolderAsync')
         .callsFake(async (doc, ...args) => {
-          if (doc.path && doc.path.includes('fatal-parent/mid')) {
+          if (
+            doc.path &&
+            doc.path.includes(path.normalize('fatal-parent/mid'))
+          ) {
             throw new syncErrors.SyncError({
               code: remoteErrors.MISSING_PARENT_CODE,
               sideName: 'local',
@@ -269,20 +276,24 @@ describe('Multiple sync problems', () => {
         await helpers.sync()
 
         // The mid dir was fatally skipped (MISSING_PARENT_CODE).
-        const midDoc = await helpers.pouch.bySyncedPath('fatal-parent/mid')
+        const midDoc = await helpers.pouch.bySyncedPath(
+          path.normalize('fatal-parent/mid')
+        )
         should(midDoc.skipped).equal(remoteErrors.MISSING_PARENT_CODE)
 
         // The leaf was cascaded with SKIPPED_DEPENDENCY (transitive fatal
         // cascade), not merely blocked for this batch.
-        should(alertPaths).containEql('fatal-parent/mid/leaf')
+        should(alertPaths).containEql(path.normalize('fatal-parent/mid/leaf'))
         const leafAlert =
-          alertErrs.find(err => err.doc.path === 'fatal-parent/mid/leaf') || {}
+          alertErrs.find(
+            err => err.doc.path === path.normalize('fatal-parent/mid/leaf')
+          ) || {}
         should(leafAlert).not.be.empty()
         should(leafAlert.code).equal(syncErrors.SKIPPED_DEPENDENCY_CODE)
-        should(leafAlert.prereqPath).equal('fatal-parent/mid')
+        should(leafAlert.prereqPath).equal(path.normalize('fatal-parent/mid'))
 
         const leafDoc = await helpers.pouch.bySyncedPath(
-          'fatal-parent/mid/leaf'
+          path.normalize('fatal-parent/mid/leaf')
         )
         should(leafDoc.skipped).equal(syncErrors.SKIPPED_DEPENDENCY_CODE)
       } finally {

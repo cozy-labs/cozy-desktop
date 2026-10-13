@@ -415,9 +415,10 @@ describe('Platform incompatibilities', () => {
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'd:ir'
     })
+    await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
     should(await helpers.incompatibleTree()).deepEqual(['d:ir/', 'd:ir/file'])
-    shouldHaveBlockedFor(['d:ir'])
+    shouldHaveBlockedFor(['d:ir', 'd:ir/file'])
 
     helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
@@ -445,7 +446,13 @@ describe('Platform incompatibilities', () => {
     await helpers.sync()
     should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
     should(await helpers.incompatibleTree()).deepEqual(['d:ir/', 'd:ir/file'])
-    shouldHaveBlockedFor(['d:ir', 'd:ir/file'])
+    // In a single batch, the child move is deferred while its parent move is
+    // blocked: only the parent reaches scheduleRetry in this batch.
+    shouldHaveBlockedFor(['d:ir'])
+    const childDoc = await helpers.pouch.bySyncedPath(
+      path.normalize('d:ir/file')
+    )
+    should(childDoc.skipped).be.undefined()
 
     helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
