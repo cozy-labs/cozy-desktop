@@ -92,7 +92,17 @@ const config = {
   win: {
     target: [{ target: 'nsis', arch: ['x64'] }],
     artifactName: 'Twake-Desktop-Setup.${ext}',
-    publisherName: 'Cozy Cloud SAS',
+    // CN of the group entities allowed to sign the app. A bare CN entry is
+    // compared by electron-updater to the signing certificate's CN (exact
+    // case, issuer irrelevant): a future certificate issued for a group
+    // branch passes as soon as its CN is listed. electron-updater logs a
+    // CN-only warning, which is accepted here (code signing certificates
+    // require organization validation).
+    publisherName: [
+      'LINAGORA SAS',
+      // 'Cozy Cloud SAS', // Uncomment if a new certificate is issued for
+      //   this entity (the previous one was revoked).
+    ],
     // Comment out the following line if the Digicert server starts failing.
     // Electron-Builder will then swtich back to the default Comodoca server.
     rfc3161TimeStampServer: 'http://timestamp.digicert.com',
