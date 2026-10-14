@@ -1,5 +1,19 @@
 # Twake Desktop: Changelog
 
+## 5.6.0-beta.5 - 2026-10-14
+
+Improvements for Windows users:
+
+- Windows clients have been unable to update themselves since v5.0.0: the
+  installer signature did not match the publisher name recorded in the
+  application.
+  Updates are accepted again now that the publisher name lists every entity of
+  the group.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.6.0-beta.4 - 2026-10-13
 
 Improvements for all users:
