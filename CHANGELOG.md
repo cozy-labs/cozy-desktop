@@ -1,5 +1,14 @@
 # Twake Desktop: Changelog
 
+## 5.6.0-beta.6 - 2026-10-15
+
+This release contains no new changes: it was published to verify that the
+auto-update works on Windows.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.6.0-beta.5 - 2026-10-14
 
 Improvements for Windows users:
