@@ -13,6 +13,18 @@ const prebuildsExclusions =
         '!node_modules/**/prebuilds/linux-*/**',
         '!node_modules/**/prebuilds/android-*/**'
       ]
+    : process.platform === 'darwin'
+    ? [
+        '!node_modules/**/prebuilds/android-*/**',
+        '!node_modules/@parcel/watcher/**',
+        '!node_modules/@gyselroth/windows-fsstat/**'
+      ]
+    : process.platform === 'linux'
+    ? [
+        '!node_modules/**/prebuilds/darwin-*/**',
+        '!node_modules/**/prebuilds/android-*/**',
+        '!node_modules/@gyselroth/windows-fsstat/**'
+      ]
     : []
 
 const config = {
@@ -99,7 +111,7 @@ const config = {
     // CN-only warning, which is accepted here (code signing certificates
     // require organization validation).
     publisherName: [
-      'LINAGORA SAS',
+      'LINAGORA SAS'
       // 'Cozy Cloud SAS', // Uncomment if a new certificate is issued for
       //   this entity (the previous one was revoked).
     ],

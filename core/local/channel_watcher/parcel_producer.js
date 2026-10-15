@@ -5,7 +5,6 @@
 
 const path = require('path')
 
-const parcel = require('@parcel/watcher')
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 
@@ -135,6 +134,9 @@ class Producer {
 
   async subscribe() {
     if (!this.watcher) {
+      // Loaded lazily: the native module is platform-specific and must not be
+      // loaded on platforms where this producer isn't used (e.g. macOS).
+      const parcel = require('@parcel/watcher')
       this.watcher = await parcel.subscribe(
         this.config.syncPath,
         async (err, events) => {
@@ -157,6 +159,7 @@ class Producer {
   }
 
   async scan(relPath /*: string */) {
+    const parcel = require('@parcel/watcher')
     const stopParcelScanMeasure = measureTime('Parcel#scan')
     const scanEvents = await parcel.scan(
       path.join(this.config.syncPath, relPath),
