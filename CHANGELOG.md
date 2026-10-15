@@ -1,5 +1,19 @@
 # Twake Desktop: Changelog
 
+## 5.6.0-beta.7 - 2026-10-15
+
+Improvements for macOS users:
+
+- The application could crash at startup with a `libc++` symbol error: a
+  native binary shipped with the application had been built for a recent
+  macOS version and could not be loaded on older systems.
+  The binary is no longer loaded at startup, and is not shipped anymore on
+  systems that never use it.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.6.0-beta.6 - 2026-10-15
 
 This release contains no new changes: it was published to verify that the
