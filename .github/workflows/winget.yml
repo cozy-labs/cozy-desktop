@@ -1,0 +1,28 @@
+name: Publish to WinGet
+on:
+  release:
+    types: [released, prereleased]
+jobs:
+  publish:
+    runs-on: windows-latest # action can only be run on windows
+    steps:
+      - name: Get Version
+        run: |
+          $tag_name = '${{ github.release.tag_name }}'
+          $version = ($tag_name | Select-String -Pattern '(?<=v).*').Matches.Value
+          echo "::set-output name=version::$version"
+        id: get-version
+
+      - if: github.event_name == 'released'
+        uses: vedantmgoyal2009/winget-releaser@v1
+        with:
+          identifier: CozyCloud.CozyDrive
+          version: ${{ steps.get-version.outputs.version }}
+          token: ${{ secrets.WINGET_TOKEN }}
+
+      - if: github.event_name == 'prereleased'
+        uses: vedantmgoyal2009/winget-releaser@v1
+        with:
+          identifier: CozyCloud.CozyDrive.Beta
+          version: ${{ steps.get-version.outputs.version }}
+          token: ${{ secrets.WINGET_TOKEN }}
