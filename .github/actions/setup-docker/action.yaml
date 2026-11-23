@@ -1,8 +1,20 @@
 name: Setup Docker
 author: Erwan Guyader
-description: Installs Lima, Colima and the Docker client from prebuilt binaries and starts a Colima VM.
+description: Installs the Docker client and a Docker engine (Colima or Kiri) from prebuilt binaries and starts it.
 
 inputs:
+  engine:
+    description: 'Docker engine to run: `colima` (Lima VM) or `kiri` (https://runkiri.com)'
+    required: false
+    default: colima
+  kiri-version:
+    description: 'Kiri version to install (https://github.com/libracoder/kiri/releases)'
+    required: false
+    default: '0.2.2'
+  kiri-sha256:
+    description: 'SHA-256 of the x86_64 Kiri tarball, from the release SHA256SUMS'
+    required: false
+    default: 5dcdd9606bd9577bc748bc6b7e68002dda391d9aa3ade46c5d6d1a38f259be87
   lima-version:
     description: 'Lima version to install (https://github.com/lima-vm/lima/releases)'
     required: false
@@ -24,6 +36,7 @@ runs:
   using: composite
   steps:
     - name: Install Lima
+      if: ${{ inputs.engine == 'colima' }}
       shell: bash
       env:
         LIMA_VERSION: ${{ inputs.lima-version }}
@@ -32,6 +45,7 @@ runs:
           | sudo tar Cxz /usr/local
 
     - name: Install Colima
+      if: ${{ inputs.engine == 'colima' }}
       shell: bash
       env:
         COLIMA_VERSION: ${{ inputs.colima-version }}
@@ -54,5 +68,43 @@ runs:
         chmod +x ~/.docker/cli-plugins/docker-compose
 
     - name: Start Colima
+      if: ${{ inputs.engine == 'colima' }}
       shell: bash
       run: colima start
+
+    - name: Install Kiri
+      if: ${{ inputs.engine == 'kiri' }}
+      shell: bash
+      env:
+        KIRI_VERSION: ${{ inputs.kiri-version }}
+        KIRI_SHA256: ${{ inputs.kiri-sha256 }}
+      run: |
+        tarball="$RUNNER_TEMP/Kiri-$KIRI_VERSION-x86_64.tar.gz"
+        curl -fsSL "https://github.com/libracoder/kiri/releases/download/v$KIRI_VERSION/Kiri-$KIRI_VERSION-x86_64.tar.gz" \
+          -o "$tarball"
+        echo "$KIRI_SHA256  $tarball" | shasum -a 256 -c -
+        mkdir -p ~/Applications
+        tar Cxzf ~/Applications "$tarball"
+        ~/Applications/Kiri.app/Contents/MacOS/kiri setup --no-agent --no-domains
+
+    - name: Start Kiri
+      if: ${{ inputs.engine == 'kiri' }}
+      shell: bash
+      run: |
+        log="$RUNNER_TEMP/kiri-daemon.log"
+        nohup ~/Applications/Kiri.app/Contents/MacOS/kiri daemon > "$log" 2>&1 &
+        export DOCKER_HOST="unix://$HOME/.kiri/run/docker.sock"
+        echo "DOCKER_HOST=$DOCKER_HOST" >> "$GITHUB_ENV"
+        # The daemon boots the VM on the first request: wait for the engine
+        # with a bound so a broken start fails fast with the daemon logs.
+        attempts=0
+        until docker info > /dev/null 2>&1; do
+          attempts=$((attempts + 1))
+          if [ "$attempts" -ge 60 ]; then
+            echo "Kiri engine not ready after $((attempts * 2))s, daemon logs:" >&2
+            tail -n 100 "$log" >&2 || true
+            exit 1
+          fi
+          sleep 2
+        done
+        docker version

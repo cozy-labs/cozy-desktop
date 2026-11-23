@@ -139,24 +139,11 @@ jobs:
             ~/.cache/electron
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
-      - name: Restore Lima cache
-        id: cache-lima
-        uses: actions/cache/restore@v6
-        env:
-          cache-name: cache-lima
-        with:
-          path: ~/Library/Caches/lima
-          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
       - name: Setup Docker
         uses: ./.github/actions/setup-docker
-      - name: Save Lima cache
-        if: ${{ steps.cache-lima.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v6
-        env:
-          cache-name: cache-lima
         with:
-          path: ~/Library/Caches/lima
-          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
+          # Trial: compare Kiri with the Colima jobs of the same run.
+          engine: kiri
       - name: Setup node
         uses: actions/setup-node@v7
         with:
