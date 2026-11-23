@@ -24,7 +24,7 @@ jobs:
         env:
           cache-name: cache-lima
         with:
-          path: ~/Library/Caches/lima
+          path: ~/Library/Caches/colima
           key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
       - name: Setup Docker
         uses: ./.github/actions/setup-docker
@@ -34,5 +34,5 @@ jobs:
         env:
           cache-name: cache-lima
         with:
-          path: ~/Library/Caches/lima
+          path: ~/Library/Caches/colima
           key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
