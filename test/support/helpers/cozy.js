@@ -13,7 +13,11 @@ import type { Config } from '../../../core/config'
 let originalNet
 const setupNetwork = async () => {
   await app.whenReady()
-  originalNet = await network.setup({ 'resolve-ipv4-first': true }, session, '')
+  originalNet = await network.setup(
+    { 'resolve-ipv4-first': true },
+    session,
+    USER_AGENT
+  )
 }
 const resetNetwork = async () => {
   if (originalNet && (await originalNet)) {
@@ -25,6 +29,7 @@ setupNetwork()
 
 const CozyClient = require('cozy-client').default
 
+const { USER_AGENT } = require('../../../dev/remote/automated_registration')
 const network = require('../../../gui/js/network')
 
 // The URL of the Cozy instance used for tests
