@@ -92,7 +92,10 @@ runs:
       shell: bash
       run: |
         log="$RUNNER_TEMP/kiri-daemon.log"
-        nohup ~/Applications/Kiri.app/Contents/MacOS/kiri daemon > "$log" 2>&1 &
+        # Never put the VM to sleep: it sleeps after 60 s without API
+        # requests, even during a long container create, and each boot on
+        # these runners nears Kiri's fixed 10 s limit.
+        KIRI_IDLE_SECS=0 nohup ~/Applications/Kiri.app/Contents/MacOS/kiri daemon > "$log" 2>&1 &
         export DOCKER_HOST="unix://$HOME/.kiri/run/docker.sock"
         echo "DOCKER_HOST=$DOCKER_HOST" >> "$GITHUB_ENV"
         # The daemon boots the VM on the first request: wait for the engine
