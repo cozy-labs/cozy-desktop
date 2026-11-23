@@ -572,7 +572,7 @@ describe('Merge', function() {
             const doc = await builders
               .metafile(synced)
               .data('local content')
-              .updatedAt(new Date())
+              .newerThan(synced)
               .unmerged('local')
               .build()
 
@@ -618,7 +618,7 @@ describe('Merge', function() {
               .path(filepath)
               .data('new content')
               .ino(456)
-              .updatedAt(new Date())
+              .newerThan(file)
               .unmerged('local')
               .build()
 
@@ -1006,7 +1006,7 @@ describe('Merge', function() {
         const localUpdate = builders
           .metafile(synced)
           .data('local update')
-          .updatedAt(new Date())
+          .newerThan(remoteUpdate)
           .unmerged('local')
           .build()
 
@@ -1489,7 +1489,7 @@ describe('Merge', function() {
       const newLocalUpdate = builders
         .metafile(synced)
         .data('local update')
-        .updatedAt(new Date())
+        .newerThan(remoteUpdate)
         .unmerged('local')
         .build()
 
@@ -1580,7 +1580,7 @@ describe('Merge', function() {
       const local = await builders
         .metafile(synced)
         .data('local update')
-        .updatedAt(new Date())
+        .newerThan(remote)
         .unmerged('local')
         .build()
 
