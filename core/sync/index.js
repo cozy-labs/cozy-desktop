@@ -55,6 +55,11 @@ const log = logger({
 
 const MAX_SYNC_RETRIES = 3
 
+// Failed retries of a change rejected for an outdated remote revision before
+// alerting the user. Retries are spaced by the remote watcher heartbeat so the
+// remote watcher, which merges the newer revision, runs before the alert.
+const NEEDS_REMOTE_MERGE_ALERT_ERRORS = 2
+
 const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
   // During a transition period, we'll need to consider both documents with the
   // deletion marker and documents which were deleted but not yet synced before
@@ -1257,13 +1262,23 @@ class Sync {
       this.events.emit('offline')
     } else if (err instanceof syncErrors.SyncError) {
       switch (err.code) {
+        case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+          // Merging the newer remote revision usually lets a following retry
+          // succeed or resolves the change (e.g. erased when deleted on both
+          // sides): only alert the user when the conflict persists.
+          if (
+            change &&
+            (change.doc.errors || 0) < NEEDS_REMOTE_MERGE_ALERT_ERRORS
+          ) {
+            break
+          }
+        // falls through
         case syncErrors.EXCLUDED_DIR_CODE:
         case syncErrors.INCOMPATIBLE_DOC_CODE:
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
         case remoteErrors.FILE_TOO_LARGE_CODE:
         case remoteErrors.INVALID_NAME_CODE:
-        case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
         case remoteErrors.NO_COZY_SPACE_CODE:
         case remoteErrors.PATH_TOO_DEEP_CODE:
         case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:

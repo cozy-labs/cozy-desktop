@@ -220,6 +220,8 @@ describe('Trash', () => {
           await helpers.sync()
           clearInterval(helpers._sync.retryInterval)
           should(helpers._sync._blockedCauses.has(doc._id)).be.true()
+          // No alert while the remote trashing can still be merged
+          should(helpers.events.state.userAlerts).be.empty()
 
           // Merging the remote trashing of a locally deleted file erases its
           // record.
@@ -395,6 +397,8 @@ describe('Trash', () => {
           await helpers.sync()
           clearInterval(helpers._sync.retryInterval)
           should(helpers._sync._blockedCauses.has(doc._id)).be.true()
+          // No alert while the remote trashing can still be merged
+          should(helpers.events.state.userAlerts).be.empty()
 
           // Merging the remote trashing of a locally deleted directory erases
           // its record.

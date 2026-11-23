@@ -1018,6 +1018,8 @@ describe('Multiple sync errors', function() {
         .metafile()
         .path('erased')
         .trashed()
+        // Enough failed retries for the alert to be displayed
+        .errors(2)
         .sides({ local: 2, remote: 1 })
         .create()
       const change = {
@@ -1080,6 +1082,54 @@ describe('Multiple sync errors', function() {
       should(this.sync._blockedCauses.size).equal(1)
       should(this.events.state.userAlerts.length).equal(1)
       should(this.events.emit).not.have.been.calledWith('user-action-done')
+    })
+  })
+
+  describe('NeedsRemoteMerge alert', () => {
+    beforeEach(function() {
+      this.events = new SyncState()
+      this.sync.events = this.events
+    })
+
+    const blockOnOutdatedRev = async ({ sync }, doc) => {
+      await sync.blockSyncFor({
+        err: retryableError(doc, remoteErrors.NEEDS_REMOTE_MERGE_CODE),
+        change: {
+          changes: [{ rev: doc._rev }],
+          doc,
+          id: doc._id,
+          seq: 42,
+          operation: { type: 'DEL', side: 'remote' }
+        }
+      })
+    }
+
+    it('is not displayed until a remote merge had a chance to happen', async function() {
+      const doc = await builders
+        .metafile()
+        .path('outdated-rev')
+        .errors(1)
+        .sides({ local: 2, remote: 1 })
+        .create()
+
+      await blockOnOutdatedRev(this, doc)
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts).be.empty()
+    })
+
+    it('is displayed when the conflict persists', async function() {
+      const doc = await builders
+        .metafile()
+        .path('outdated-rev')
+        .errors(2)
+        .sides({ local: 2, remote: 1 })
+        .create()
+
+      await blockOnOutdatedRev(this, doc)
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
     })
   })
 
