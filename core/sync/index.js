@@ -1569,11 +1569,8 @@ class Sync {
       log.info('file will be trashed by itself', { path: doc.path })
     }
 
+    // `delete-file` is emitted by `apply` when erasing the trashed record.
     await side.trashAsync(doc)
-
-    if (metadata.isFile(doc)) {
-      this.events.emit('delete-file', doc)
-    }
   }
 
   async isMissing(

@@ -358,6 +358,31 @@ describe('Sync', function() {
       }
     })
 
+    it('notifies the deletion of a trashed file only once', async function() {
+      const doc = await builders
+        .metafile()
+        .path('foo')
+        .trashed()
+        .changedSide('local')
+        .create()
+      const change /*: Change */ = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 146,
+        operation: { type: 'DEL', side: 'remote' }
+      }
+
+      this.remote.trashAsync = sinon.stub().resolves(true)
+      sinon.spy(this.events, 'emit')
+      try {
+        await this.sync.apply(change)
+        should(this.events.emit.withArgs('delete-file')).have.been.calledOnce()
+      } finally {
+        this.events.emit.restore()
+      }
+    })
+
     it('trashes a locally deleted folder with content', async function() {
       const deletedChild = await builders
         .metadata()
