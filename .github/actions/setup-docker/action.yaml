@@ -108,3 +108,14 @@ runs:
           sleep 2
         done
         docker version
+        # The API answers before the guest VM exists: boot it now so a
+        # guest that cannot start fails here, with its logs.
+        echo "kern.hv_support: $(sysctl -n kern.hv_support 2>&1)"
+        for boot in 1 2 3; do
+          docker run --rm alpine true && exit 0
+          echo "Guest boot attempt $boot failed" >&2
+          sleep 5
+        done
+        echo "Kiri guest VM did not boot, daemon logs:" >&2
+        tail -n 200 "$log" >&2 || true
+        exit 1
