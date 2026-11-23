@@ -41,7 +41,7 @@ runs:
       env:
         LIMA_VERSION: ${{ inputs.lima-version }}
       run: |
-        curl -fsSL "https://github.com/lima-vm/lima/releases/download/$LIMA_VERSION/lima-${LIMA_VERSION#v}-$(uname -s)-$(uname -m).tar.gz" \
+        curl -fsSL --retry 5 --retry-all-errors "https://github.com/lima-vm/lima/releases/download/$LIMA_VERSION/lima-${LIMA_VERSION#v}-$(uname -s)-$(uname -m).tar.gz" \
           | sudo tar Cxz /usr/local
 
     - name: Install Colima
@@ -50,7 +50,7 @@ runs:
       env:
         COLIMA_VERSION: ${{ inputs.colima-version }}
       run: |
-        curl -fsSL "https://github.com/abiosoft/colima/releases/download/$COLIMA_VERSION/colima-$(uname -s)-$(uname -m)" \
+        curl -fsSL --retry 5 --retry-all-errors "https://github.com/abiosoft/colima/releases/download/$COLIMA_VERSION/colima-$(uname -s)-$(uname -m)" \
           -o /tmp/colima
         sudo install -m 0755 /tmp/colima /usr/local/bin/colima
 
@@ -60,10 +60,10 @@ runs:
         DOCKER_VERSION: ${{ inputs.docker-version }}
         COMPOSE_VERSION: ${{ inputs.compose-version }}
       run: |
-        curl -fsSL "https://download.docker.com/mac/static/stable/x86_64/docker-$DOCKER_VERSION.tgz" \
+        curl -fsSL --retry 5 --retry-all-errors "https://download.docker.com/mac/static/stable/x86_64/docker-$DOCKER_VERSION.tgz" \
           | sudo tar Cxz /usr/local/bin --strip-components 1 docker/docker
         mkdir -p ~/.docker/cli-plugins
-        curl -fsSL "https://github.com/docker/compose/releases/download/$COMPOSE_VERSION/docker-compose-darwin-x86_64" \
+        curl -fsSL --retry 5 --retry-all-errors "https://github.com/docker/compose/releases/download/$COMPOSE_VERSION/docker-compose-darwin-x86_64" \
           -o ~/.docker/cli-plugins/docker-compose
         chmod +x ~/.docker/cli-plugins/docker-compose
 
@@ -80,7 +80,7 @@ runs:
         KIRI_SHA256: ${{ inputs.kiri-sha256 }}
       run: |
         tarball="$RUNNER_TEMP/Kiri-$KIRI_VERSION-x86_64.tar.gz"
-        curl -fsSL "https://github.com/libracoder/kiri/releases/download/v$KIRI_VERSION/Kiri-$KIRI_VERSION-x86_64.tar.gz" \
+        curl -fsSL --retry 5 --retry-all-errors "https://github.com/libracoder/kiri/releases/download/v$KIRI_VERSION/Kiri-$KIRI_VERSION-x86_64.tar.gz" \
           -o "$tarball"
         echo "$KIRI_SHA256  $tarball" | shasum -a 256 -c -
         mkdir -p ~/Applications
