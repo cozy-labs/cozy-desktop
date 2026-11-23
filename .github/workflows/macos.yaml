@@ -139,24 +139,11 @@ jobs:
             ~/.cache/electron
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
-      - name: Restore Lima cache
-        id: cache-lima
-        uses: actions/cache/restore@v6
-        env:
-          cache-name: cache-lima
-        with:
-          path: ~/Library/Caches/lima
-          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
       - name: Setup Docker
         uses: ./.github/actions/setup-docker
-      - name: Save Lima cache
-        if: ${{ steps.cache-lima.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v6
-        env:
-          cache-name: cache-lima
         with:
-          path: ~/Library/Caches/lima
-          key: ${{ runner.os }}-${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('.github/actions/setup-docker/action.yaml') }}
+          # Trial: compare Kiri with the Colima jobs of the same run.
+          engine: kiri
       - name: Setup node
         uses: actions/setup-node@v7
         with:
@@ -187,7 +174,15 @@ jobs:
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Setup cozy-stack
-        run: docker compose up -d
+        # Trial: Kiri gives its guest VM 10 s to boot, which these runners
+        # barely meet, so a failed start is retried.
+        run: |
+          for attempt in 1 2 3; do
+            docker compose up -d && exit 0
+            echo "docker compose up attempt $attempt failed" >&2
+            sleep 5
+          done
+          exit 1
       - name: Setup test config
         run: ./test/wait-for-stack.sh
       - name: Integration tests
@@ -195,6 +190,11 @@ jobs:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
           COZY_DESKTOP_DB_PATH: "${{ runner.temp }}/twake-desktop-db"
         run: yarn test:integration --forbid-only --retries 2
+      - name: Show Kiri logs
+        if: ${{ failure() }}
+        run: |
+          tail -n 200 "$RUNNER_TEMP/kiri-daemon.log" || true
+          find ~/.kiri -name '*.log' -print -exec tail -n 100 {} \; || true
 
   scenarios:
     runs-on: macos-26-intel
