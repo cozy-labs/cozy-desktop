@@ -210,6 +210,10 @@ describe('Trash', () => {
           const doc = await helpers.pouch.bySyncedPath(
             path.normalize('parent/file')
           )
+          const deletedFiles = []
+          helpers.events.on('delete-file', deleted =>
+            deletedFiles.push(deleted.path)
+          )
 
           await helpers.remote.trashById(file._id)
           await helpers.local.syncDir.remove('parent/file')
@@ -232,6 +236,8 @@ describe('Trash', () => {
 
           should(helpers._sync._blockedCauses.size).equal(0)
           should(helpers.events.state.userAlerts).be.empty()
+          // The GUI removes the file from its recent files
+          should(deletedFiles).deepEqual([path.normalize('parent/file')])
           should(await helpers.local.treeWithoutTrash()).deepEqual(['parent/'])
           should(await helpers.remote.tree()).deepEqual([
             '.cozy_trash/',

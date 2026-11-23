@@ -1050,6 +1050,11 @@ describe('Multiple sync errors', function() {
       should(this.sync._blockedCauses.size).equal(0)
       should(this.events.state.userAlerts.length).equal(0)
       should(this.events.emit).have.been.calledWith('user-action-done')
+      // The GUI removes the file from its recent files
+      should(this.events.emit).have.been.calledWith(
+        'delete-file',
+        sinon.match({ _id: doc._id })
+      )
     })
 
     it('keeps the cause of a change whose record has a newer revision', async function() {
@@ -1082,6 +1087,7 @@ describe('Multiple sync errors', function() {
       should(this.sync._blockedCauses.size).equal(1)
       should(this.events.state.userAlerts.length).equal(1)
       should(this.events.emit).not.have.been.calledWith('user-action-done')
+      should(this.events.emit).not.have.been.calledWith('delete-file')
     })
   })
 

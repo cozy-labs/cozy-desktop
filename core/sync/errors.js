@@ -220,6 +220,10 @@ const retryAll = async (
           path: change.doc.path
         })
         sync.resolveBlockingCause(change.id)
+        // The merge erasing the record cannot notify the GUI of the deletion.
+        if (metadata.isFile(change.doc)) {
+          sync.events.emit('delete-file', change.doc)
+        }
       }
     }
     // Causes without change stay registered in _blockedCauses (and their
