@@ -1392,10 +1392,12 @@ class Sync {
   }
 
   // Increment the counter of errors for this document
+  //
+  // Returns whether the error was recorded.
   async updateErrors(
     change /*: Change */,
     err /*: SyncError */
-  ) /*: Promise<void> */ {
+  ) /*: Promise<boolean> */ {
     const { doc } = change
 
     try {
@@ -1406,12 +1408,14 @@ class Sync {
       metadata.markSide(sourceSideName, doc, doc)
 
       change.doc = await this.pouch.put(doc, { checkInvariants: false })
+      return true
     } catch (err) {
       if (err.status === 409) {
-        // A conflict means a watcher merged a new revision of this doc: a new
-        // change is in the feed and this error belongs to the superseded
-        // change, so don't record it. The new change will be processed by the
-        // sync loop (success → cause resolved, failure → fresh cause).
+        // A conflict means a watcher merged a new revision of this doc (or
+        // erased it) and this error belongs to the superseded change, so don't
+        // record it. A new revision will be processed by the sync loop
+        // (success → cause resolved, failure → fresh cause) while an erased
+        // record never shows up in its feed again (see `retryAll`).
         log.debug(`could not update doc errors for change ${change.seq}`, {
           err,
           path: doc.path
@@ -1425,6 +1429,7 @@ class Sync {
           { err, sentry: true }
         )
       }
+      return false
     }
   }
 

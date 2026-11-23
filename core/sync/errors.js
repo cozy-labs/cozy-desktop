@@ -209,7 +209,18 @@ const retryAll = async (
 
   for (const cause of causes) {
     if (cause.change) {
-      await sync.updateErrors(cause.change, cause.err)
+      const { change } = cause
+      const recorded = await sync.updateErrors(change, cause.err)
+      if (!recorded && !(await sync.pouch.byIdMaybe(change.id))) {
+        // The record was erased by a merge (e.g. the document was deleted on
+        // both sides): there is nothing left to synchronize and the erased
+        // record will never show up in the Sync feed to resolve the cause.
+        log.info('resolving blocking cause of erased record', {
+          seq: change.seq,
+          path: change.doc.path
+        })
+        sync.resolveBlockingCause(change.id)
+      }
     }
     // Causes without change stay registered in _blockedCauses (and their
     // user alert displayed) until the restarted watcher completes a

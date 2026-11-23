@@ -1012,6 +1012,75 @@ describe('Multiple sync errors', function() {
       should(this.events.state.userAlerts.length).equal(1)
       should(this.events.emit).not.have.been.calledWith('user-action-done')
     })
+
+    it('resolves the cause of a change whose record was erased', async function() {
+      const doc = await builders
+        .metafile()
+        .path('erased')
+        .trashed()
+        .sides({ local: 2, remote: 1 })
+        .create()
+      const change = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 42,
+        operation: { type: 'DEL', side: 'remote' }
+      }
+
+      await this.sync.blockSyncFor({
+        err: retryableError(doc, remoteErrors.NEEDS_REMOTE_MERGE_CODE),
+        change
+      })
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
+
+      // The remote watcher merges the remote trashing of the document, also
+      // deleted locally, and erases its record.
+      await this.pouch.eraseDocument(doc)
+
+      await syncErrors.retryAll(
+        Array.from(this.sync._blockedCauses.values()),
+        this.sync
+      )
+
+      should(this.sync._blockedCauses.size).equal(0)
+      should(this.events.state.userAlerts.length).equal(0)
+      should(this.events.emit).have.been.calledWith('user-action-done')
+    })
+
+    it('keeps the cause of a change whose record has a newer revision', async function() {
+      const doc = await builders
+        .metafile()
+        .path('superseded')
+        .sides({ local: 1 })
+        .create()
+      const change = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 42,
+        operation: { type: 'ADD', side: 'remote' }
+      }
+
+      await this.sync.blockSyncFor({ err: blockingSyncError(doc), change })
+
+      // A watcher merges a new revision: its change will go through Sync.
+      await builders
+        .metafile(doc)
+        .changedSide('local')
+        .create()
+
+      await syncErrors.retryAll(
+        Array.from(this.sync._blockedCauses.values()),
+        this.sync
+      )
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
+      should(this.events.emit).not.have.been.calledWith('user-action-done')
+    })
   })
 
   describe('SyncState status priority', () => {

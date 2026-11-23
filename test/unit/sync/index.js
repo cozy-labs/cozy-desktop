@@ -921,11 +921,12 @@ describe('Sync', function() {
         .sides({ local: 1 })
         .create()
 
-      await this.sync.updateErrors(
+      const recorded = await this.sync.updateErrors(
         { doc },
         remoteSyncError('simulated error', doc)
       )
 
+      should(recorded).be.true()
       const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(1)
       should(actual._rev).not.equal(doc._rev)
@@ -966,11 +967,12 @@ describe('Sync', function() {
 
       const byIdMaybe = sinon.spy(this.pouch, 'byIdMaybe')
       try {
-        await this.sync.updateErrors(
+        const recorded = await this.sync.updateErrors(
           { doc },
           remoteSyncError('simulated error', doc)
         )
 
+        should(recorded).be.false()
         should(byIdMaybe).not.have.been.called()
 
         const actual = await this.pouch.bySyncedPath(doc.path)
