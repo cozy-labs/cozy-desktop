@@ -445,4 +445,9 @@ const automatedRegistration = (
   })
 }
 
-module.exports = { automatedRegistration, getSsoContext, ssoDelegationCode }
+module.exports = {
+  USER_AGENT,
+  automatedRegistration,
+  getSsoContext,
+  ssoDelegationCode
+}

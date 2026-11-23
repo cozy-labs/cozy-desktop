@@ -3,6 +3,7 @@ const { app, session } = require('electron')
 const fse = require('fs-extra')
 
 const {
+  USER_AGENT,
   automatedRegistration,
   getSsoContext,
   ssoDelegationCode
@@ -54,7 +55,7 @@ app
     // session cookie which would trigger a redirect from the login page.
     return syncSession.clearStorageData()
   })
-  .then(() => network.setup({}, session, ''))
+  .then(() => network.setup({}, session, USER_AGENT))
   .then(async () => {
     const ssoCtx = await getSsoContext(cozyUrl)
     if (ssoCtx) {
