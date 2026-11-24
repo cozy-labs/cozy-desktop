@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - master
+      - 'diag/**'
     tags:
       - '**'
   pull_request:
@@ -43,6 +44,7 @@ env:
 
 jobs:
   unit:
+    if: false
     runs-on: macos-26-intel
     name: Unit tests
     strategy:
@@ -120,6 +122,7 @@ jobs:
         run: yarn test:unit --forbid-only --retries 2
 
   integration:
+    if: false
     runs-on: macos-26-intel
     name: Integration tests
     strategy:
@@ -201,8 +204,9 @@ jobs:
     name: Scenarios
     strategy:
       matrix:
-        stopped_client: ['', 'STOPPED']
-        fs: ['APFS', 'HFS+']
+        stopped_client: ['']
+        fs: ['APFS']
+        batch: [1, 2, 3, 4]
       fail-fast: false
     steps:
       - uses: actions/checkout@v7
@@ -279,9 +283,23 @@ jobs:
           STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
           COZY_DESKTOP_FS: ${{ matrix.fs }}
           COZY_DESKTOP_DB_PATH: "${{ runner.temp }}/twake-desktop-db"
-        run: yarn test:scenarios --forbid-only --retries 2
+          DEBUG: "1"
+        run: |
+          for attempt in $(seq 1 40)
+          do
+            echo "::group::Attempt $attempt"
+            yarn test:scenarios --forbid-only --grep 'move_a_to_b_and_create_a/remote' || exit 1
+            echo "::endgroup::"
+          done
+      - name: Upload debug log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: debug-log-${{ matrix.fs == 'HFS+' && 'HFS' || matrix.fs }}-${{ matrix.batch }}
+          path: debug.log
 
   build:
+    if: false
     name: Build packages
     strategy:
       matrix:
