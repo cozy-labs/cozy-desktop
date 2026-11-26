@@ -65,6 +65,31 @@ const oldMetadata = async (
 }
 
 /**
+ * Tells whether the file described by the given Metadata is still on disk at
+ * the given path.
+ *
+ * The inode is not enough: on a case insensitive filesystem, a file renamed
+ * with a different case can still be reached through its old path. We thus
+ * make sure its parent has an entry with this exact name.
+ *
+ * @return Promise<boolean>
+ */
+const isStillOnDisk = async (
+  abspath /*: string */,
+  old /*: Metadata */
+) /*: Promise<boolean> */ => {
+  try {
+    const stats = await fse.stat(abspath)
+    if (stats.ino !== old.ino) return false
+
+    const names = await fse.readdir(path.dirname(abspath))
+    return names.includes(path.basename(abspath))
+  } catch (err) {
+    return false
+  }
+}
+
+/**
  * Adds domain information on raw Chokidar events including associated existing
  * Metadata and normalized path.
  *
@@ -117,6 +142,20 @@ const step = async (
               return null
             }
           }
+        }
+      }
+
+      if (e.type === 'unlink' && old && old.ino) {
+        // The record is looked up by path when the events are flushed. If
+        // the path was freed then taken by another file in the meantime
+        // (e.g. a remote move followed by the download of a new file), the
+        // event is about a file which is not the one described by the record.
+        if (await isStillOnDisk(abspath, old)) {
+          log.debug('Ignore unlink: file is still on disk', {
+            path: e.path,
+            ino: old.ino
+          })
+          return null
         }
       }
 
