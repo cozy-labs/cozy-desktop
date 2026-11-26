@@ -204,6 +204,48 @@ describe('Trash', () => {
           ])
         })
       })
+
+      context('while it was also trashed on the remote Cozy', () => {
+        it('considers the deletion synchronized once the remote one is merged', async () => {
+          const doc = await helpers.pouch.bySyncedPath(
+            path.normalize('parent/file')
+          )
+          const deletedFiles = []
+          helpers.events.on('delete-file', deleted =>
+            deletedFiles.push(deleted.path)
+          )
+
+          await helpers.remote.trashById(file._id)
+          await helpers.local.syncDir.remove('parent/file')
+          await helpers.local.scan()
+
+          // The remote trashing is not merged yet: the trash request is
+          // rejected with a 412 and the change is blocked.
+          await helpers.sync()
+          clearInterval(helpers._sync.retryInterval)
+          should(helpers._sync._blockedCauses.has(doc._id)).be.true()
+          // No alert while the remote trashing can still be merged
+          should(helpers.events.state.userAlerts).be.empty()
+
+          // Merging the remote trashing of a locally deleted file erases its
+          // record.
+          await helpers.remote.pullChanges()
+          await should(pouch.db.get(doc._id)).be.rejectedWith({ status: 404 })
+
+          await helpers._sync._onUserActionCommand({ cmd: 'retry' })
+
+          should(helpers._sync._blockedCauses.size).equal(0)
+          should(helpers.events.state.userAlerts).be.empty()
+          // The GUI removes the file from its recent files
+          should(deletedFiles).deepEqual([path.normalize('parent/file')])
+          should(await helpers.local.treeWithoutTrash()).deepEqual(['parent/'])
+          should(await helpers.remote.tree()).deepEqual([
+            '.cozy_trash/',
+            '.cozy_trash/file',
+            'parent/'
+          ])
+        })
+      })
     })
 
     context('on the remote Cozy', () => {
@@ -344,6 +386,45 @@ describe('Trash', () => {
           '.cozy_trash/dir/subdir/file',
           'parent/'
         ])
+      })
+
+      context('while it was also trashed on the remote Cozy', () => {
+        it('considers the deletion synchronized once the remote one is merged', async () => {
+          const doc = await helpers.pouch.bySyncedPath(
+            path.normalize('parent/dir')
+          )
+
+          await helpers.remote.trashById(dir._id)
+          await helpers.local.syncDir.remove('parent/dir')
+          await helpers.local.scan()
+
+          // The remote trashing is not merged yet: the trash request is
+          // rejected with a 412 and the change is blocked.
+          await helpers.sync()
+          clearInterval(helpers._sync.retryInterval)
+          should(helpers._sync._blockedCauses.has(doc._id)).be.true()
+          // No alert while the remote trashing can still be merged
+          should(helpers.events.state.userAlerts).be.empty()
+
+          // Merging the remote trashing of a locally deleted directory erases
+          // its record.
+          await helpers.remote.pullChanges()
+          await should(pouch.db.get(doc._id)).be.rejectedWith({ status: 404 })
+
+          await helpers._sync._onUserActionCommand({ cmd: 'retry' })
+
+          should(helpers._sync._blockedCauses.size).equal(0)
+          should(helpers.events.state.userAlerts).be.empty()
+          should(await helpers.local.treeWithoutTrash()).deepEqual(['parent/'])
+          should(await helpers.remote.tree()).deepEqual([
+            '.cozy_trash/',
+            '.cozy_trash/dir/',
+            '.cozy_trash/dir/empty-subdir/',
+            '.cozy_trash/dir/subdir/',
+            '.cozy_trash/dir/subdir/file',
+            'parent/'
+          ])
+        })
       })
     })
 

@@ -358,6 +358,31 @@ describe('Sync', function() {
       }
     })
 
+    it('notifies the deletion of a trashed file only once', async function() {
+      const doc = await builders
+        .metafile()
+        .path('foo')
+        .trashed()
+        .changedSide('local')
+        .create()
+      const change /*: Change */ = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 146,
+        operation: { type: 'DEL', side: 'remote' }
+      }
+
+      this.remote.trashAsync = sinon.stub().resolves(true)
+      sinon.spy(this.events, 'emit')
+      try {
+        await this.sync.apply(change)
+        should(this.events.emit.withArgs('delete-file')).have.been.calledOnce()
+      } finally {
+        this.events.emit.restore()
+      }
+    })
+
     it('trashes a locally deleted folder with content', async function() {
       const deletedChild = await builders
         .metadata()
@@ -921,11 +946,12 @@ describe('Sync', function() {
         .sides({ local: 1 })
         .create()
 
-      await this.sync.updateErrors(
+      const recorded = await this.sync.updateErrors(
         { doc },
         remoteSyncError('simulated error', doc)
       )
 
+      should(recorded).be.true()
       const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(1)
       should(actual._rev).not.equal(doc._rev)
@@ -966,11 +992,12 @@ describe('Sync', function() {
 
       const byIdMaybe = sinon.spy(this.pouch, 'byIdMaybe')
       try {
-        await this.sync.updateErrors(
+        const recorded = await this.sync.updateErrors(
           { doc },
           remoteSyncError('simulated error', doc)
         )
 
+        should(recorded).be.false()
         should(byIdMaybe).not.have.been.called()
 
         const actual = await this.pouch.bySyncedPath(doc.path)

@@ -55,6 +55,11 @@ const log = logger({
 
 const MAX_SYNC_RETRIES = 3
 
+// Failed retries of a change rejected for an outdated remote revision before
+// alerting the user. Retries are spaced by the remote watcher heartbeat so the
+// remote watcher, which merges the newer revision, runs before the alert.
+const NEEDS_REMOTE_MERGE_ALERT_ERRORS = 2
+
 const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
   // During a transition period, we'll need to consider both documents with the
   // deletion marker and documents which were deleted but not yet synced before
@@ -1257,13 +1262,23 @@ class Sync {
       this.events.emit('offline')
     } else if (err instanceof syncErrors.SyncError) {
       switch (err.code) {
+        case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+          // Merging the newer remote revision usually lets a following retry
+          // succeed or resolves the change (e.g. erased when deleted on both
+          // sides): only alert the user when the conflict persists.
+          if (
+            change &&
+            (change.doc.errors || 0) < NEEDS_REMOTE_MERGE_ALERT_ERRORS
+          ) {
+            break
+          }
+        // falls through
         case syncErrors.EXCLUDED_DIR_CODE:
         case syncErrors.INCOMPATIBLE_DOC_CODE:
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
         case remoteErrors.FILE_TOO_LARGE_CODE:
         case remoteErrors.INVALID_NAME_CODE:
-        case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
         case remoteErrors.NO_COZY_SPACE_CODE:
         case remoteErrors.PATH_TOO_DEEP_CODE:
         case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
@@ -1392,10 +1407,12 @@ class Sync {
   }
 
   // Increment the counter of errors for this document
+  //
+  // Returns whether the error was recorded.
   async updateErrors(
     change /*: Change */,
     err /*: SyncError */
-  ) /*: Promise<void> */ {
+  ) /*: Promise<boolean> */ {
     const { doc } = change
 
     try {
@@ -1406,12 +1423,14 @@ class Sync {
       metadata.markSide(sourceSideName, doc, doc)
 
       change.doc = await this.pouch.put(doc, { checkInvariants: false })
+      return true
     } catch (err) {
       if (err.status === 409) {
-        // A conflict means a watcher merged a new revision of this doc: a new
-        // change is in the feed and this error belongs to the superseded
-        // change, so don't record it. The new change will be processed by the
-        // sync loop (success → cause resolved, failure → fresh cause).
+        // A conflict means a watcher merged a new revision of this doc (or
+        // erased it) and this error belongs to the superseded change, so don't
+        // record it. A new revision will be processed by the sync loop
+        // (success → cause resolved, failure → fresh cause) while an erased
+        // record never shows up in its feed again (see `retryAll`).
         log.debug(`could not update doc errors for change ${change.seq}`, {
           err,
           path: doc.path
@@ -1425,6 +1444,7 @@ class Sync {
           { err, sentry: true }
         )
       }
+      return false
     }
   }
 
@@ -1549,11 +1569,8 @@ class Sync {
       log.info('file will be trashed by itself', { path: doc.path })
     }
 
+    // `delete-file` is emitted by `apply` when erasing the trashed record.
     await side.trashAsync(doc)
-
-    if (metadata.isFile(doc)) {
-      this.events.emit('delete-file', doc)
-    }
   }
 
   async isMissing(

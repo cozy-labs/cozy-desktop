@@ -1012,6 +1012,131 @@ describe('Multiple sync errors', function() {
       should(this.events.state.userAlerts.length).equal(1)
       should(this.events.emit).not.have.been.calledWith('user-action-done')
     })
+
+    it('resolves the cause of a change whose record was erased', async function() {
+      const doc = await builders
+        .metafile()
+        .path('erased')
+        .trashed()
+        // Enough failed retries for the alert to be displayed
+        .errors(2)
+        .sides({ local: 2, remote: 1 })
+        .create()
+      const change = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 42,
+        operation: { type: 'DEL', side: 'remote' }
+      }
+
+      await this.sync.blockSyncFor({
+        err: retryableError(doc, remoteErrors.NEEDS_REMOTE_MERGE_CODE),
+        change
+      })
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
+
+      // The remote watcher merges the remote trashing of the document, also
+      // deleted locally, and erases its record.
+      await this.pouch.eraseDocument(doc)
+
+      await syncErrors.retryAll(
+        Array.from(this.sync._blockedCauses.values()),
+        this.sync
+      )
+
+      should(this.sync._blockedCauses.size).equal(0)
+      should(this.events.state.userAlerts.length).equal(0)
+      should(this.events.emit).have.been.calledWith('user-action-done')
+      // The GUI removes the file from its recent files
+      should(this.events.emit).have.been.calledWith(
+        'delete-file',
+        sinon.match({ _id: doc._id })
+      )
+    })
+
+    it('keeps the cause of a change whose record has a newer revision', async function() {
+      const doc = await builders
+        .metafile()
+        .path('superseded')
+        .sides({ local: 1 })
+        .create()
+      const change = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 42,
+        operation: { type: 'ADD', side: 'remote' }
+      }
+
+      await this.sync.blockSyncFor({ err: blockingSyncError(doc), change })
+
+      // A watcher merges a new revision: its change will go through Sync.
+      await builders
+        .metafile(doc)
+        .changedSide('local')
+        .create()
+
+      await syncErrors.retryAll(
+        Array.from(this.sync._blockedCauses.values()),
+        this.sync
+      )
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
+      should(this.events.emit).not.have.been.calledWith('user-action-done')
+      should(this.events.emit).not.have.been.calledWith('delete-file')
+    })
+  })
+
+  describe('NeedsRemoteMerge alert', () => {
+    beforeEach(function() {
+      this.events = new SyncState()
+      this.sync.events = this.events
+    })
+
+    const blockOnOutdatedRev = async ({ sync }, doc) => {
+      await sync.blockSyncFor({
+        err: retryableError(doc, remoteErrors.NEEDS_REMOTE_MERGE_CODE),
+        change: {
+          changes: [{ rev: doc._rev }],
+          doc,
+          id: doc._id,
+          seq: 42,
+          operation: { type: 'DEL', side: 'remote' }
+        }
+      })
+    }
+
+    it('is not displayed until a remote merge had a chance to happen', async function() {
+      const doc = await builders
+        .metafile()
+        .path('outdated-rev')
+        .errors(1)
+        .sides({ local: 2, remote: 1 })
+        .create()
+
+      await blockOnOutdatedRev(this, doc)
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts).be.empty()
+    })
+
+    it('is displayed when the conflict persists', async function() {
+      const doc = await builders
+        .metafile()
+        .path('outdated-rev')
+        .errors(2)
+        .sides({ local: 2, remote: 1 })
+        .create()
+
+      await blockOnOutdatedRev(this, doc)
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.events.state.userAlerts.length).equal(1)
+    })
   })
 
   describe('SyncState status priority', () => {
